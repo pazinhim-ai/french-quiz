@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0055a4" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>French Language Quiz — A2 to C2</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #0055a4; --red: #ef4135; --bg: #f4f6fb; --card: #fff;
+      --text: #1a1a2e; --muted: #6b7280; --border: #e2e8f0;
+      --correct: #16a34a; --correct-bg: #dcfce7;
+      --wrong: #dc2626;   --wrong-bg: #fee2e2;
+      --explain-bg: #fffbeb; --explain-border: #fbbf24;
+      --radius: 14px; --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding: 24px 16px 56px;
+    }
+
+    header { text-align: center; margin-bottom: 28px; }
+    .flag { display: flex; width: 54px; height: 36px; border-radius: 6px;
+      overflow: hidden; margin: 0 auto 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .flag span { flex: 1; }
+    .flag .f1 { background: var(--blue); }
+    .flag .f2 { background: #fff; }
+    .flag .f3 { background: var(--red); }
+    h1 { font-size: 1.75rem; font-weight: 800; color: var(--blue); }
+    h1 em { color: var(--red); font-style: normal; }
+    .subtitle { margin-top: 5px; color: var(--muted); font-size: 0.9rem; }
+
+    .screen { width: 100%; max-width: 680px; }
+
+    /* ── CARDS ─────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 24px;
+    }
+    .card + .card { margin-top: 14px; }
+    .card-title {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+    }
+
+    /* ── LEVEL BADGES ──────────────────────────────────────────────── */
+    .badge {
+      display: inline-block; padding: 3px 9px; border-radius: 99px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .badge-a2 { background: #dbeafe; color: #1d4ed8; }
+    .badge-b1 { background: #ede9fe; color: #6d28d9; }
+    .badge-b2 { background: #fef3c7; color: #b45309; }
+    .badge-c1 { background: #fce7f3; color: #be185d; }
+    .badge-c2 { background: #f0fdf4; color: #15803d; }
+
+    /* ── DASHBOARD ─────────────────────────────────────────────────── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 500px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+
+    .stat-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 14px 12px; text-align: center;
+    }
+    .stat-num { font-size: 1.6rem; font-weight: 800; color: var(--blue); line-height: 1; }
+    .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 540px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* Level mastery bars */
+    .mastery-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .mastery-row:last-child { margin-bottom: 0; }
+    .mastery-label { width: 28px; font-size: 0.75rem; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+    .mastery-bar-wrap { flex: 1; height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .mastery-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+    .mastery-pct { font-size: 0.75rem; font-weight: 600; width: 36px; text-align: right; flex-shrink: 0; }
+    .mastery-star { font-size: 0.85rem; width: 18px; flex-shrink: 0; }
+
+    /* ── CONSTRAINT TRANSLATION ───────────────────────────────────── */
+    .tr-sentence {
+      font-size: 1.15rem; font-weight: 700; color: var(--text);
+      background: #f8fafc; border-left: 4px solid var(--blue);
+      padding: 12px 16px; border-radius: 0 10px 10px 0; margin-bottom: 4px;
+      line-height: 1.5;
+    }
+    .tr-constraints { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+    .tr-chip {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: #fef3c7; border: 1.5px solid #fbbf24; border-radius: 9px;
+      padding: 7px 12px; font-size: 0.84rem; color: #78350f; line-height: 1.4;
+    }
+    .tr-chip-num {
+      font-weight: 800; font-size: 0.78rem; background: #fbbf24; color: #fff;
+      border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+    .tr-input {
+      width: 100%; border: 2px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; font-size: 1rem; font-family: inherit; resize: vertical;
+      outline: none; transition: border-color 0.15s; color: var(--text);
+      min-height: 80px;
+    }
+    .tr-input:focus { border-color: var(--blue); }
+    .tr-feedback-header {
+      font-size: 1rem; font-weight: 800; margin-bottom: 14px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tr-constraint-result {
+      display: flex; gap: 10px; padding: 9px 12px; border-radius: 9px;
+      margin-bottom: 7px; font-size: 0.86rem; line-height: 1.5; align-items: flex-start;
+    }
+    .tr-constraint-result.met { background: var(--correct-bg); border: 1px solid #86efac; }
+    .tr-constraint-result.unmet { background: var(--wrong-bg); border: 1px solid #fca5a5; }
+    .tr-constraint-result.partial { background: #fef3c7; border: 1px solid #fbbf24; }
+    .tr-cr-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .tr-cr-label { font-weight: 700; display: block; margin-bottom: 2px; }
+    .tr-ideal-block {
+      background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px;
+      padding: 12px 15px; margin: 14px 0;
+    }
+    .tr-ideal-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #1d4ed8; margin-bottom: 6px; }
+    .tr-ideal-text { font-size: 0.98rem; color: #1e3a8a; font-weight: 600; line-height: 1.55; }
+    .tr-overall-feedback { font-size: 0.88rem; color: var(--muted); line-height: 1.65; margin-bottom: 16px; }
+
+    /* Session history */
+    .history-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .history-row:last-child { border-bottom: none; }
+    .history-date { color: var(--muted); font-size: 0.75rem; width: 80px; flex-shrink: 0; }
+    .history-set { color: var(--muted); font-size: 0.75rem; width: 44px; flex-shrink: 0; }
+    .history-score { font-weight: 700; color: var(--text); }
+    .history-pct { color: var(--muted); font-size: 0.78rem; margin-left: 4px; }
+    .history-perfect { font-size: 0.8rem; margin-left: auto; color: var(--correct); font-weight: 600; }
+    .empty-history { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 12px 0; }
+
+    .cta-wrap { margin-top: 18px; text-align: center; }
+
+    /* ── BUTTONS ───────────────────────────────────────────────────── */
+    .btn {
+      border: none; border-radius: 10px; padding: 13px 28px;
+      font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: filter 0.15s, transform 0.1s;
+    }
+    .btn:hover { filter: brightness(0.92); transform: translateY(-1px); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-outline {
+      background: transparent; border: 2px solid var(--blue);
+      color: var(--blue); padding: 11px 28px;
+    }
+    .btn-outline:hover { background: var(--blue); color: #fff; }
+    .btn-sm { padding: 8px 18px; font-size: 0.88rem; }
+
+    /* ── PROGRESS BAR ──────────────────────────────────────────────── */
+    .progress-wrap { margin-bottom: 16px; }
+    .progress-meta { display: flex; justify-content: space-between;
+      font-size: 0.8rem; color: var(--muted); margin-bottom: 5px; }
+    .progress-bar { height: 7px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--blue), #4f86c6);
+      border-radius: 99px; transition: width 0.4s ease; }
+
+    /* ── QUIZ CARD ─────────────────────────────────────────────────── */
+    .question-text { font-size: 1.15rem; font-weight: 600; line-height: 1.55; margin-bottom: 20px; }
+    .options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+    .option-btn {
+      background: var(--bg); border: 2px solid var(--border); border-radius: 10px;
+      padding: 12px 15px; font-size: 0.97rem; text-align: left; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      color: var(--text); font-family: inherit; display: flex; align-items: center;
+    }
+    .option-btn:hover:not(:disabled) { border-color: var(--blue); background: #eff6ff; transform: translateX(3px); }
+    .option-btn:disabled { cursor: default; transform: none; }
+    .option-btn.correct { border-color: var(--correct); background: var(--correct-bg); color: var(--correct); font-weight: 600; }
+    .option-btn.wrong   { border-color: var(--wrong);   background: var(--wrong-bg);   color: var(--wrong);   font-weight: 600; }
+    .opt-marker {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%; font-size: 0.78rem; font-weight: 700;
+      margin-right: 10px; background: var(--border); color: var(--muted); flex-shrink: 0;
+    }
+    .option-btn.correct .opt-marker { background: var(--correct); color: #fff; }
+    .option-btn.wrong   .opt-marker { background: var(--wrong);   color: #fff; }
+
+    .explanation {
+      display: none; border-radius: 10px; border-left: 4px solid var(--explain-border);
+      background: var(--explain-bg); padding: 13px 15px; font-size: 0.9rem;
+      line-height: 1.65; margin-bottom: 18px; animation: fadeIn 0.3s ease;
+    }
+    .explanation.show { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+    .next-btn { display: none; }
+    .next-btn.show { display: inline-block; }
+
+    /* ── RESULTS ───────────────────────────────────────────────────── */
+    #screen-results .card { text-align: center; }
+    .result-level { font-size: 3.8rem; font-weight: 900; color: var(--blue); line-height: 1; margin: 12px 0 6px; }
+    .result-level-name { font-size: 1rem; color: var(--muted); margin-bottom: 20px; }
+    .score-circle {
+      width: 104px; height: 104px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), #4f86c6);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin: 0 auto 20px; box-shadow: 0 6px 20px rgba(0,85,164,.3);
+    }
+    .score-num { font-size: 1.9rem; font-weight: 900; color: #fff; line-height: 1; }
+    .score-denom { font-size: 0.78rem; color: rgba(255,255,255,.8); }
+    .breakdown-row {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .bk-item {
+      border-radius: 10px; padding: 9px 14px; font-size: 0.82rem; text-align: center;
+    }
+    .bk-item .bk-num { font-weight: 800; font-size: 1rem; }
+    .bk-item .bk-sub { color: var(--muted); font-size: 0.72rem; }
+    .unlock-banner {
+      background: var(--correct-bg); border: 2px solid var(--correct);
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 18px;
+      color: var(--correct); font-weight: 700; font-size: 0.95rem;
+    }
+    .try-again-note {
+      background: #fef3c7; border: 2px solid #fbbf24;
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 18px;
+      color: #92400e; font-size: 0.9rem; line-height: 1.55;
+    }
+    .result-message { font-size: 0.92rem; line-height: 1.7; color: var(--muted);
+      margin-bottom: 22px; max-width: 440px; margin-left: auto; margin-right: auto; }
+    .result-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .hint-btn {
+    background: none; border: 1.5px dashed #f59e0b; border-radius: 8px;
+    padding: 5px 13px; font-size: 0.82rem; color: #92400e; cursor: pointer;
+    font-family: inherit; margin-bottom: 14px; transition: background 0.15s;
+    display: inline-block;
+  }
+  .hint-btn:hover { background: #fffbeb; }
+  .hint-panel {
+    display: none; background: #fffbeb; border: 1.5px solid #f59e0b;
+    border-radius: 10px; padding: 12px 15px; font-size: 0.88rem;
+    line-height: 1.65; color: #78350f; margin-bottom: 14px;
+  }
+  .hint-panel.show { display: block; animation: fadeIn 0.25s ease; }
+
+  #confetti-canvas {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── REPEAT BUTTON ─────────────────────────────────────────────── */
+  .repeat-btn {
+    background: none; border: 1.5px dashed #94a3b8; border-radius: 8px;
+    padding: 6px 14px; font-size: 0.82rem; color: #64748b; cursor: pointer;
+    font-family: inherit; transition: all 0.15s; display: inline-block;
+    margin-bottom: 14px;
+  }
+  .repeat-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #475569; color: #334155; }
+  .repeat-btn.flagged { border-color: #3b82f6; color: #1d4ed8; background: #eff6ff; border-style: solid; }
+  .repeat-btn.is-repeat { border-color: #f59e0b; color: #92400e; background: #fffbeb; border-style: solid; cursor: default; }
+  .repeat-btn:disabled { opacity: 0.7; cursor: default; }
+
+  /* ── WORD OF THE DAY ───────────────────────────────────────────── */
+  .wotd-card {
+    background: linear-gradient(135deg, #0055a4 0%, #1a6fc4 100%);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 20px 24px; margin-bottom: 14px; color: #fff; position: relative; overflow: hidden;
+  }
+  .wotd-card::before {
+    content: ''; position: absolute; top: -20px; right: -20px;
+    width: 100px; height: 100px; background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .wotd-card::after {
+    content: ''; position: absolute; bottom: -30px; right: 30px;
+    width: 140px; height: 140px; background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .wotd-label {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 10px;
+  }
+  .wotd-word {
+    font-size: 2rem; font-weight: 900; line-height: 1; margin-bottom: 4px;
+  }
+  .wotd-gender {
+    display: inline-block; font-size: 0.7rem; font-weight: 700;
+    background: rgba(255,255,255,0.18); border-radius: 99px;
+    padding: 2px 9px; margin-left: 8px; vertical-align: middle;
+    letter-spacing: 0.3px;
+  }
+  .wotd-meaning {
+    font-size: 1.05rem; color: rgba(255,255,255,0.88); margin-bottom: 12px; font-weight: 500;
+  }
+  .wotd-example {
+    font-size: 0.88rem; line-height: 1.6; color: rgba(255,255,255,0.78);
+    border-left: 3px solid rgba(255,255,255,0.3); padding-left: 12px;
+    font-style: italic;
+  }
+
+  /* ── WEEKLY CHART ──────────────────────────────────────────────── */
+  .chart-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 24px; margin-bottom: 14px; }
+  .chart-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  #weekly-chart { width: 100%; height: 130px; display: block; }
+
+  /* ── CONJUGATION TABLE ─────────────────────────────────────────── */
+  .conj-block { margin-top: 12px; border-top: 1px dashed #fbbf24; padding-top: 10px; }
+  .conj-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #b45309; margin-bottom: 6px; }
+  .conj-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px;
+    font-size: 0.82rem; color: #78350f;
+  }
+  .conj-grid span b { color: #0055a4; }
+
+  /* ── WOTD SPEAKER BUTTON ───────────────────────────────────────── */
+  .wotd-speak-btn {
+    background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.35);
+    border-radius: 8px; padding: 4px 12px; font-size: 0.82rem; color: #fff;
+    cursor: pointer; font-family: inherit; margin-left: 10px; transition: background 0.15s;
+    vertical-align: middle;
+  }
+  .wotd-speak-btn:hover { background: rgba(255,255,255,0.25); }
+  .wotd-speak-btn.speaking { background: rgba(255,255,255,0.3); border-color: #fff; }
+
+  /* ── SET PRACTICE SELECTOR ─────────────────────────────────────── */
+  .practice-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; margin-bottom: 14px; }
+  .practice-sets { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .practice-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 9px; border: 1.5px solid var(--border);
+  }
+  .practice-row.locked { opacity: 0.4; }
+  .practice-row-name { flex: 1; font-size: 0.88rem; font-weight: 600; }
+  .practice-row-sub { font-size: 0.72rem; color: var(--muted); }
+  .btn-practice {
+    background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 8px;
+    color: var(--blue); font-size: 0.78rem; font-weight: 700; padding: 5px 13px;
+    cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.15s;
+  }
+  .btn-practice:hover { background: #dbeafe; }
+
+  /* ── ROLEPLAY CHAT ─────────────────────────────────────────────── */
+  .scenario-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;
+  }
+  @media (max-width: 480px) { .scenario-grid { grid-template-columns: 1fr; } }
+  .scenario-btn {
+    background: var(--card); border: 2px solid var(--border); border-radius: 12px;
+    padding: 14px 12px; text-align: center; cursor: pointer; font-family: inherit;
+    transition: border-color 0.15s, background 0.15s; display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+  }
+  .scenario-btn:hover { border-color: var(--blue); background: #eff6ff; }
+  .scenario-icon { font-size: 1.8rem; }
+  .scenario-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+  .scenario-desc { font-size: 0.75rem; color: var(--muted); line-height: 1.3; }
+  .chat-header {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--blue); color: #fff; border-radius: var(--radius) var(--radius) 0 0;
+    padding: 14px 18px;
+  }
+  .chat-header-icon { font-size: 1.5rem; }
+  .chat-header-title { font-weight: 800; font-size: 1rem; flex: 1; }
+  .chat-header-sub { font-size: 0.75rem; color: rgba(255,255,255,0.75); }
+  .btn-chat-back {
+    background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.35);
+    border-radius: 8px; color: #fff; padding: 5px 12px; font-size: 0.8rem;
+    cursor: pointer; font-family: inherit;
+  }
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column;
+    gap: 10px; background: #f8fafc; min-height: 320px; max-height: 420px;
+  }
+  .chat-bubble {
+    max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 0.9rem;
+    line-height: 1.55; animation: fadeIn 0.2s ease;
+  }
+  .chat-bubble.ai { background: #fff; border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; align-self: flex-start; }
+  .chat-bubble.user { background: var(--blue); color: #fff; border-radius: 16px 16px 4px 16px; align-self: flex-end; }
+  .chat-bubble.correction { background: #fffbeb; border: 1px solid #fbbf24; font-size: 0.82rem; color: #78350f; align-self: flex-start; max-width: 90%; }
+  .chat-bubble.system { background: #f1f5f9; color: var(--muted); font-size: 0.8rem; text-align: center; align-self: center; border-radius: 99px; padding: 5px 14px; }
+  .chat-input-row {
+    display: flex; gap: 8px; padding: 12px 16px; background: var(--card);
+    border-top: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius);
+  }
+  .chat-input {
+    flex: 1; border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 13px; font-size: 0.95rem; font-family: inherit; resize: none;
+    outline: none; transition: border-color 0.15s; background: #f8fafc; color: var(--text);
+  }
+  .chat-input:focus { border-color: var(--blue); background: #fff; }
+  .btn-send {
+    background: var(--blue); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+    font-family: inherit; transition: filter 0.15s; white-space: nowrap;
+  }
+  .btn-send:hover:not(:disabled) { filter: brightness(0.9); }
+  .btn-send:disabled { opacity: 0.5; cursor: default; }
+  .chat-typing { display: flex; gap: 4px; align-items: center; padding: 8px 14px; }
+  .chat-typing span {
+    width: 7px; height: 7px; background: var(--muted); border-radius: 50%;
+    animation: typing 1.2s infinite ease-in-out;
+  }
+  .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+  .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+  .api-key-form { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .api-key-form label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .api-key-input {
+    width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; font-size: 0.88rem; font-family: inherit; outline: none;
+    transition: border-color 0.15s;
+  }
+  .api-key-input:focus { border-color: var(--blue); }
+  .api-warning { font-size: 0.75rem; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+  <div class="flag"><span class="f1"></span><span class="f2"></span><span class="f3"></span></div>
+  <h1>Quiz de <em>Français</em></h1>
+  <p class="subtitle">A2 → C2 · 4 sets · 10 questions each</p>
+</header>
+
+<!-- ── DASHBOARD ─────────────────────────────────────────────────────────── -->
+<div id="screen-home" class="screen" style="display:none">
+
+  <!-- Word of the Day -->
+  <div class="wotd-card" id="wotd-card">
+    <div class="wotd-label">🇫🇷 Word of the Day</div>
+    <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:4px">
+      <span class="wotd-word" id="wotd-word"></span><span class="wotd-gender" id="wotd-gender" style="display:none"></span>
+      <button class="wotd-speak-btn" id="wotd-speak-btn" onclick="speakWotd()" title="Hear pronunciation">🔊 Listen</button>
+    </div>
+    <div class="wotd-meaning" id="wotd-meaning"></div>
+    <div class="wotd-example" id="wotd-example"></div>
+  </div>
+
+  <!-- Practice any set -->
+  <div class="practice-card">
+    <div class="card-title">Practice a set</div>
+    <div class="practice-sets" id="practice-sets"></div>
+  </div>
+
+  <!-- Constraint Translation -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">✏️ Constraint Translation</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Translate English sentences into French using specific grammar constraints. AI-evaluated.</p>
+    <button class="btn btn-primary" style="width:100%" onclick="goToTranslate()">Open Constraint Translation →</button>
+  </div>
+
+  <!-- Roleplay Chat -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">💬 Roleplay Chat</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Practice real French conversations. The AI speaks only French and gently corrects your mistakes.</p>
+    <button class="btn btn-outline" style="width:100%" onclick="goToChat()">Open Roleplay Chat →</button>
+  </div>
+
+  <!-- Level mastery -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Level mastery</div>
+    <div id="mastery-bars"></div>
+  </div>
+
+  <!-- Weekly progress chart -->
+  <div class="chart-card">
+    <div class="chart-title">Weekly progress — last 7 days</div>
+    <canvas id="weekly-chart"></canvas>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="dash-attempts">0</div>
+      <div class="stat-label">Attempts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="dash-set">1</div>
+      <div class="stat-label">Current set</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="dash-best">—</div>
+      <div class="stat-label">Best score</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="dash-avg">—</div>
+      <div class="stat-label">Avg score</div>
+    </div>
+  </div>
+
+  <!-- Session history -->
+  <div class="card">
+    <div class="card-title">Recent sessions</div>
+    <div id="history-list"></div>
+  </div>
+
+  <div class="cta-wrap">
+    <button class="btn btn-primary" id="start-btn" onclick="startQuiz()">Start Quiz →</button>
+    <p style="margin-top:10px;font-size:0.8rem;color:var(--muted)" id="start-note"></p>
+  </div>
+
+</div>
+
+<!-- ── SCENARIO SELECT ────────────────────────────────────────────────────── -->
+<div id="screen-scenarios" class="screen" style="display:none">
+  <div class="card">
+    <button class="btn-chat-back" style="background:none;border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 13px;font-size:0.8rem;cursor:pointer;font-family:inherit;margin-bottom:14px" onclick="goHome()">← Dashboard</button>
+    <div class="card-title">💬 Roleplay Chat</div>
+    <p style="font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:4px">Practice real French in context. The AI speaks only French, stays in character, and gently corrects mistakes. Choose your scenario:</p>
+    <div class="scenario-grid" id="scenario-grid"></div>
+    <div id="chat-key-saved" style="display:none;align-items:center;gap:8px;font-size:0.82rem;color:var(--muted);margin-top:14px;padding:10px 14px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px">
+      <span style="color:#16a34a;font-weight:700">✓ API key saved</span>
+      <button onclick="resetApiKey('chat')" style="background:none;border:none;color:var(--muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit">Reset key</button>
+    </div>
+    <div class="api-key-form" id="chat-api-key-form" style="margin-top:16px">
+      <label for="api-key-input">Anthropic API Key (stored locally, never sent anywhere else)</label>
+      <input type="password" class="api-key-input" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" oninput="onApiKeyInput('api-key-input')" />
+      <p class="api-warning">⚠️ Your key is stored only in your browser's localStorage. It is sent directly to api.anthropic.com — never to any other server. For a personal app this is acceptable; don't share the file with others.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CHAT ───────────────────────────────────────────────────────────────── -->
+<div id="screen-chat" class="screen" style="display:none">
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="chat-header">
+      <span class="chat-header-icon" id="chat-icon"></span>
+      <div>
+        <div class="chat-header-title" id="chat-title"></div>
+        <div class="chat-header-sub" id="chat-sub"></div>
+      </div>
+      <button class="btn-chat-back" onclick="showScreen('screen-scenarios')">← Scénarios</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Écrivez en français…" onkeydown="chatKeydown(event)"></textarea>
+      <button class="btn-send" id="chat-send-btn" onclick="sendChatMessage()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONSTRAINT TRANSLATION ─────────────────────────────────────────────── -->
+<div id="screen-translate" class="screen" style="display:none">
+
+  <!-- Exercise card -->
+  <div class="card" id="tr-exercise-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button style="background:none;border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 13px;font-size:0.8rem;cursor:pointer;font-family:inherit" onclick="goHome()">← Dashboard</button>
+      <span class="badge" id="tr-level-badge"></span>
+    </div>
+    <div class="card-title">✏️ Constraint Translation</div>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px" id="tr-progress-text"></p>
+
+    <p style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Translate into French:</p>
+    <div class="tr-sentence" id="tr-sentence"></div>
+
+    <p style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin:14px 0 8px">Constraints — your answer must:</p>
+    <div class="tr-constraints" id="tr-constraints"></div>
+
+    <textarea class="tr-input" id="tr-input" placeholder="Écrivez votre traduction ici…" rows="3" oninput="trInputChanged()"></textarea>
+    <button class="btn btn-primary" id="tr-submit-btn" onclick="submitTranslation()" disabled style="width:100%;margin-top:10px">Evaluate →</button>
+
+    <div id="tr-key-saved" style="display:none;align-items:center;gap:8px;font-size:0.82rem;color:var(--muted);margin-top:14px;padding:10px 14px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px">
+      <span style="color:#16a34a;font-weight:700">✓ API key saved</span>
+      <button onclick="resetApiKey('translate')" style="background:none;border:none;color:var(--muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit">Reset key</button>
+    </div>
+    <div class="api-key-form" id="tr-api-key-form" style="margin-top:14px">
+      <label for="tr-api-key-input">Anthropic API Key</label>
+      <input type="password" class="api-key-input" id="tr-api-key-input" placeholder="sk-ant-…" autocomplete="off" oninput="onApiKeyInput('tr-api-key-input')" />
+      <p class="api-warning">Your key is stored only in your browser's localStorage and sent only to api.anthropic.com.</p>
+    </div>
+  </div>
+
+  <!-- Feedback card (hidden until evaluated) -->
+  <div class="card" id="tr-feedback-card" style="display:none;margin-top:14px">
+    <div class="tr-feedback-header" id="tr-feedback-header"></div>
+    <div id="tr-constraint-results"></div>
+    <div class="tr-ideal-block">
+      <div class="tr-ideal-label">Ideal answer</div>
+      <div class="tr-ideal-text" id="tr-ideal-text"></div>
+    </div>
+    <p class="tr-overall-feedback" id="tr-overall-feedback"></p>
+    <button class="btn btn-primary" style="width:100%" onclick="nextTranslateExercise()">Next exercise →</button>
+  </div>
+
+</div>
+
+<!-- ── QUIZ ───────────────────────────────────────────────────────────────── -->
+<div id="screen-quiz" class="screen" style="display:none">
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="q-counter">Question 1 / 25</span>
+      <span id="q-score-live">Score: 0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div class="card">
+    <div id="q-badge" class="badge" style="margin-bottom:14px"></div>
+    <p class="question-text" id="question-text"></p>
+    <div class="options" id="options"></div>
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()">💡 Show hint</button>
+    <div class="hint-panel" id="hint-panel"></div>
+    <button class="repeat-btn" id="repeat-btn" onclick="toggleRepeatLater()">🔁 Repeat later</button>
+    <div class="explanation" id="explanation"></div>
+    <button class="btn btn-primary next-btn" id="next-btn" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<!-- ── RESULTS ────────────────────────────────────────────────────────────── -->
+<div id="screen-results" class="screen" style="display:none">
+  <div class="card">
+    <div class="flag" style="margin:0 auto 10px"><span class="f1"></span><span class="f2"></span><span class="f3"></span></div>
+    <p style="color:var(--muted);font-size:0.85rem">Your result</p>
+    <div class="result-level" id="result-level"></div>
+    <div class="result-level-name" id="result-level-name"></div>
+    <div class="score-circle">
+      <div class="score-num" id="res-score-num"></div>
+      <div class="score-denom" id="score-denom">/ 15</div>
+    </div>
+    <div class="breakdown-row" id="res-breakdown"></div>
+    <div id="res-unlock" style="display:none" class="unlock-banner"></div>
+    <div id="res-retry"  style="display:none" class="try-again-note"></div>
+    <p class="result-message" id="res-message"></p>
+    <div class="result-btns">
+      <button class="btn btn-outline" onclick="retryQuiz()">Try again ↺</button>
+      <button class="btn btn-primary" onclick="goHome()">Dashboard →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// QUESTION DATA — 3 sets × 25 questions (A2×5, B1×5, B2×5, C1×5, C2×5)
+// ══════════════════════════════════════════════════════════════════════════════
+const QUESTION_SETS = [
+
+// ─────────────────────── SET 1 — A2 Foundation ───────────────────────────────
+[
+// A2 Grammar
+{ level:"A2", question:'Complétez : "Nous ___ des étudiants."',
+  options:["sommes","êtes","sont","suis"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">être — présent</div><div class="conj-grid"><span>je <b>suis</b></span><span>nous <b>sommes</b></span><span>tu <b>es</b></span><span>vous <b>êtes</b></span><span>il/elle <b>est</b></span><span>ils/elles <b>sont</b></span></div></div>',
+  explanation:'<strong>Sommes</strong> est correct. Le verbe <em>être</em> se conjugue : je <b>suis</b>, tu <b>es</b>, il <b>est</b>, nous <b>sommes</b>, vous <b>êtes</b>, ils <b>sont</b>. <em>Nous</em> va toujours avec <em>sommes</em>.' },
+
+{ level:"A2", question:'"Elle porte une robe ___." — Choisissez la forme correcte de <em>beau</em>.',
+  options:["belle","beau","bel","beaux"], answer:0,
+  explanation:'<strong>Belle</strong> est correct. <em>Robe</em> est féminin, donc l\'adjectif doit s\'accorder : <em>belle</em>. <em>Beau</em> est masculin singulier, <em>bel</em> est masculin devant une voyelle (un <em>bel</em> homme), <em>beaux</em> est masculin pluriel.' },
+
+{ level:"A2", question:'"Il ___ parle pas anglais — il est espagnol." — Quel mot complète la négation ?',
+  options:["ne","ni","n\'","pas"], answer:0,
+  explanation:'<strong>Ne</strong> est correct. La négation française encadre le verbe : <em>ne</em> + verbe + <em>pas</em>. "Il <b>ne</b> parle <b>pas</b>." En français parlé, on entend souvent "il parle pas" sans le <em>ne</em>, mais en français écrit ou soigné, les deux éléments sont nécessaires.' },
+
+{ level:"A2", question:'"J\'___ soif — tu as quelque chose à boire ?" — Quel verbe ?',
+  options:["ai","suis","fais","veux"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">avoir — présent</div><div class="conj-grid"><span>j\'<b>ai</b></span><span>nous <b>avons</b></span><span>tu <b>as</b></span><span>vous <b>avez</b></span><span>il/elle <b>a</b></span><span>ils/elles <b>ont</b></span></div></div>',
+  explanation:'<strong>Ai</strong> est correct. En français, on utilise <em>avoir</em> pour les états physiques : j\'ai faim (hungry), j\'ai soif (thirsty), j\'ai froid (cold), j\'ai chaud (hot), j\'ai sommeil (sleepy). On ne dit jamais "je suis soif".' },
+
+// A2 Vocabulary
+{ level:"A2", question:'On achète une baguette chez le ___.',
+  options:["boulanger","boucher","pharmacien","libraire"], answer:0,
+  explanation:'<strong>Boulanger</strong> est correct. Le boulanger vend du pain, des croissants et des viennoiseries dans une <em>boulangerie</em>. Le boucher vend de la viande, le pharmacien vend des médicaments, le libraire vend des livres. Attention : <em>librairie</em> = bookshop, pas bibliothèque (library).' },
+
+{ level:"A2", question:'"La fille de mon oncle est ma ___."',
+  options:["cousine","nièce","tante","belle-sœur"], answer:0,
+  explanation:'<strong>Cousine</strong> est correct. L\'enfant d\'un oncle ou d\'une tante est un <em>cousin</em> / une <em>cousine</em>. <em>Nièce</em> = la fille de ton frère ou de ta sœur. <em>Tante</em> = la sœur de ton père ou de ta mère. <em>Belle-sœur</em> = la femme de ton frère.' },
+
+{ level:"A2", question:'Quelle expression décrit un temps pluvieux et nuageux ?',
+  options:["Il fait mauvais","Il fait beau","Il fait chaud","Il y a du soleil"], answer:0,
+  explanation:'<strong>Il fait mauvais</strong> décrit un mauvais temps (nuages, pluie, vent). <em>Il fait beau</em> = nice weather. <em>Il fait chaud</em> = it\'s hot. <em>Il y a du soleil</em> = it\'s sunny. Autres expressions utiles : <em>il pleut</em> (it\'s raining), <em>il neige</em> (it\'s snowing), <em>il y a du vent</em> (it\'s windy).' },
+
+{ level:"A2", question:'"C\'est ___ sac ?" — Comment demande-t-on "Is it your bag?" (à un ami, tutoiement) ?',
+  options:["ton","ta","tes","votre"], answer:0,
+  explanation:'<strong>Ton</strong> est correct. Les adjectifs possessifs s\'accordent avec le NOM, pas avec le possesseur. <em>Sac</em> est masculin → <em>ton</em> sac. <em>Ta</em> est féminin (ta valise), <em>tes</em> est pluriel (tes affaires), <em>votre</em> est la forme de politesse (vous).' },
+
+{ level:"A2", question:'Pour demander le prix d\'un article dans un magasin, on dit :',
+  options:["C\'est combien ?","C\'est comment ?","C\'est où ?","C\'est quand ?"], answer:0,
+  explanation:'<strong>C\'est combien ?</strong> est la façon la plus naturelle de demander le prix en français courant. On peut aussi dire <em>Ça coûte combien ?</em> ou, plus formellement, <em>Quel est le prix ?</em> / <em>Combien coûte cet article ?</em>.' },
+
+// A2 Vocabulary continued
+{ level:"A2", question:'"Je ___ un café crème, s\'il vous plaît." — Comment commander poliment ?',
+  options:["voudrais","veux","prends","dois"], answer:0,
+  explanation:'<strong>Voudrais</strong> (conditionnel de <em>vouloir</em>) est la formule polie pour commander. "Je veux" sonne sec. "Je prends" est aussi courant en pratique ("je prends le menu"). Dans un café ou restaurant, <em>je voudrais</em> est la formule la plus appréciée.' },
+
+{ level:"A2", question:'"J\'___ mal à la tête depuis ce matin — j\'ai besoin d\'un médicament."',
+  options:["ai","suis","fais","sens"], answer:0,
+  explanation:'<strong>Ai mal à</strong> est l\'expression pour la douleur physique. "Avoir mal à + partie du corps" = to have pain in... j\'ai mal à la tête (headache), au ventre (stomach ache), aux dents (toothache), au dos (back pain). Expression du quotidien indispensable.' },
+
+{ level:"A2", question:'"Pour aller de Paris à Lyon, le ___ en TGV dure environ deux heures."',
+  options:["trajet","billet","quai","horaire"], answer:0,
+  explanation:'<strong>Trajet</strong> = le voyage / le temps de parcours. C\'est un mot du quotidien : "le trajet pour aller au bureau" = the commute. <em>Billet</em> = ticket. <em>Quai</em> = platform (where you board the train). <em>Horaire</em> = timetable/schedule.' },
+
+{ level:"A2", question:'"Vous avez ceci en ___ 40 ? Je fais du 40." — Que cherche-t-on ?',
+  options:["taille","couleur","prix","modèle"], answer:0,
+  explanation:'<strong>Taille</strong> = size (clothing). "Quelle est votre taille ?" = "What size are you?" Note : pour les chaussures, on dit <em>pointure</em> (not taille). Vocab utile en magasin : <em>essayer</em> (to try on), <em>la cabine d\'essayage</em> (fitting room), <em>ça me va bien</em> (it fits me well).' },
+
+{ level:"A2", question:'"On ___ un verre ce soir après le boulot ?" — Que propose-t-on ?',
+  options:["prend","va","fait","boit"], answer:0,
+  explanation:'<strong>Prend</strong> est correct. "Prendre un verre" = to have a drink — expression très courante pour inviter quelqu\'un. On dit aussi "boire un verre" mais "prendre un verre" est plus naturel dans une invitation. Autres : prendre un café, prendre l\'apéro, prendre un repas ensemble.' },
+
+// Early B1
+{ level:"B1", question:'"Je dois me ___ — mon rendez-vous est dans dix minutes et je suis encore en pyjama !"',
+  options:["dépêcher","reposer","souvenir","méfier"], answer:0,
+  explanation:'<strong>Se dépêcher</strong> = to hurry up. C\'est un verbe réflexif très courant : "Dépêche-toi !" = Hurry up! <em>Se reposer</em> = to rest. <em>Se souvenir</em> = to remember. <em>Se méfier de</em> = to be wary of. Vous entendrez <em>se dépêcher</em> tous les jours en France.' },
+],
+
+// ─────────────────────── SET 2 — B1 Intermediate ─────────────────────────────
+[
+// B1 Grammar
+{ level:"B1", question:'"Quand j\'étais petit, je ___ du vélo tous les week-ends avec mon père."',
+  options:["faisais","ai fait","ferai","fis"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">faire — imparfait</div><div class="conj-grid"><span>je <b>faisais</b></span><span>nous <b>faisions</b></span><span>tu <b>faisais</b></span><span>vous <b>faisiez</b></span><span>il/elle <b>faisait</b></span><span>ils/elles <b>faisaient</b></span></div></div>',
+  explanation:'<strong>Faisais</strong> (imparfait) est correct. L\'imparfait décrit une action habituelle ou répétée dans le passé. "Tous les week-ends" indique une répétition → imparfait. Le passé composé (<em>ai fait</em>) décrirait une action unique et terminée.' },
+
+{ level:"B1", question:'"Tu as écrit à ta sœur ?" "Oui, je ___ ai envoyé un long message."',
+  options:["lui","la","l\'","y"], answer:0,
+  explanation:'<strong>Lui</strong> est correct. <em>Écrire à quelqu\'un</em> → COI (complément d\'objet indirect) → pronom <em>lui</em> (singulier). <em>La/l\'</em> sont des pronoms COD. <em>Y</em> remplace <em>à + chose/lieu</em>, pas une personne. "Lui" correspond à "à elle" ici.' },
+
+{ level:"B1", question:'"Il faut que tu ___ plus tôt demain matin." (partir) — Quelle forme est correcte ?',
+  options:["partes","pars","partiras","partais"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">partir — subjonctif présent</div><div class="conj-grid"><span>que je <b>parte</b></span><span>que nous <b>partions</b></span><span>que tu <b>partes</b></span><span>que vous <b>partiez</b></span><span>qu\'il/elle <b>parte</b></span><span>qu\'ils/elles <b>partent</b></span></div></div>',
+  explanation:'<strong>Partes</strong> (subjonctif) est correct. <em>Il faut que</em> déclenche toujours le subjonctif. Subjonctif de <em>partir</em> : que je <b>parte</b>, tu <b>partes</b>, il <b>parte</b>, nous <b>partions</b>, vous <b>partiez</b>, ils <b>partent</b>.' },
+
+{ level:"B1", question:'"Hier soir, je ___ la télé quand mon ami a frappé à la porte."',
+  options:["regardais","ai regardé","regarderai","regardai"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">regarder — imparfait</div><div class="conj-grid"><span>je <b>regardais</b></span><span>nous <b>regardions</b></span><span>tu <b>regardais</b></span><span>vous <b>regardiez</b></span><span>il/elle <b>regardait</b></span><span>ils/elles <b>regardaient</b></span></div></div>',
+  explanation:'<strong>Regardais</strong> (imparfait) est correct. L\'imparfait décrit une action de fond en cours quand une autre action l\'interrompt. "Quand mon ami a frappé" = l\'interruption (passé composé). Regarder la télé était en cours → imparfait.' },
+
+{ level:"B1", question:'"Je viendrai à la fête si j\'___ le temps." — Quelle forme après <em>si</em> ?',
+  options:["ai","avais","aurais","aurai"], answer:0,
+  explanation:'<strong>Ai</strong> (présent) est correct. Règle d\'or : après <em>si</em> conditionnel de type 1, on utilise toujours le présent — jamais le futur ni le conditionnel. "Si j\'ai le temps, je viendrai." C\'est une des erreurs les plus fréquentes en français, même avancé.' },
+
+// B1 Vocabulary
+{ level:"B1", question:'"Mon train a du ___ — il va arriver avec vingt minutes de retard."',
+  options:["retard","problème","retour","départ"], answer:0,
+  explanation:'<strong>Retard</strong> est correct. "Avoir du retard" = to be running late. "Mon train a du retard" est l\'une des expressions les plus utiles en France ! <em>Être en retard</em> = to be late (as a person). <em>Retour</em> = return. <em>Départ</em> = departure.' },
+
+{ level:"B1", question:'"En France, le ___ est le repas de la mi-journée, servi entre 12h et 14h."',
+  options:["déjeuner","dîner","petit-déjeuner","goûter"], answer:0,
+  explanation:'<strong>Déjeuner</strong> est correct (= lunch). <em>Dîner</em> = le repas du soir. <em>Petit-déjeuner</em> = le repas du matin. <em>Goûter</em> = le snack de l\'après-midi (vers 16h, surtout pour les enfants). Attention : en Belgique et en Suisse, le <em>dîner</em> peut désigner le repas de midi !' },
+
+{ level:"B1", question:'"Ma température est à 39°C : j\'ai de la ___."',
+  options:["fièvre","toux","nausée","douleur"], answer:0,
+  explanation:'<strong>Fièvre</strong> est correct. La fièvre = une température corporelle élevée (au-dessus de 37,5°C). Autres symptômes courants : <em>la toux</em> (cough), <em>la nausée</em> (nausea), <em>le mal de gorge</em> (sore throat), <em>le mal de tête</em> (headache), <em>le nez qui coule</em> (runny nose).' },
+
+{ level:"B1", question:'"Son ___ est très cher pour un studio de 25m² — il paie 950€ par mois."',
+  options:["loyer","salaire","budget","prêt"], answer:0,
+  explanation:'<strong>Loyer</strong> = rent (monthly housing payment). "Payer le loyer" est une expression du quotidien en France. <em>Salaire</em> = salary. <em>Budget</em> = budget. <em>Prêt</em> = loan. Le loyer est souvent l\'une des plus grosses dépenses mensuelles des Français.' },
+
+{ level:"B1", question:'"Je suis vraiment ___ de te revoir après tout ce temps !"',
+  options:["ravi(e)","déçu(e)","étonné(e)","pressé(e)"], answer:0,
+  explanation:'<strong>Ravi(e)</strong> = delighted, thrilled. "Je suis ravi(e) de + infinitif" est une formule très courante pour exprimer une joie sincère. <em>Déçu(e)</em> = disappointed. <em>Étonné(e)</em> = surprised. <em>Pressé(e)</em> = in a hurry. <em>Ravi</em> s\'entend tous les jours dans les échanges polis en France.' },
+
+// B1 Vocabulary continued
+{ level:"B1", question:'"J\'ai ___ mon bus de justesse — il est parti 30 secondes avant que j\'arrive !"',
+  options:["raté","manqué","perdu","quitté"], answer:0,
+  explanation:'<strong>Raté</strong> est le verbe le plus courant en français parlé pour "to miss" (un bus, un train, un avion, un examen). "Louper" est encore plus familier. <em>Manquer</em> est correct aussi mais plus formel : "j\'ai manqué le train". <em>Rater</em> s\'utilise pour : rater le bus, rater un examen, rater une occasion.' },
+
+{ level:"B1", question:'"Je voudrais réserver une ___ pour deux personnes ce soir à 20h."',
+  options:["table","chambre","place","salle"], answer:0,
+  explanation:'<strong>Table</strong> est correct. "Réserver une table" est l\'expression standard pour une réservation au restaurant. Au téléphone : "Bonsoir, je voudrais réserver une table pour deux personnes pour ce soir à vingt heures." Si complet : "nous sommes complets" (fully booked).' },
+
+{ level:"B1", question:'"Votre ___ de passe doit contenir au moins 8 caractères et un chiffre."',
+  options:["mot","code","numéro","nom"], answer:0,
+  explanation:'<strong>Mot de passe</strong> = password (literally "a pass word"). Expressions courantes : "changer son mot de passe", "j\'ai oublié mon mot de passe", "réinitialiser son mot de passe". <em>Code PIN</em> = PIN code. Un vocabulaire indispensable dans la vie numérique quotidienne.' },
+
+{ level:"B1", question:'"On se ___ devant le cinéma à 19h, d\'accord ?"',
+  options:["retrouve","rencontre","voit","rejoint"], answer:0,
+  explanation:'<strong>Se retrouver</strong> = to meet up (at an agreed place with someone you already know). L\'expression la plus naturelle pour fixer un rendez-vous entre amis. "Se rencontrer" = to meet for the first time. "Je te rejoins là-bas" = I\'ll join you there.' },
+
+{ level:"B1", question:'"Elle était très ___ quand elle a appris qu\'elle avait eu son bac !"',
+  options:["soulagée","déçue","inquiète","pressée"], answer:0,
+  explanation:'<strong>Soulagée</strong> = relieved. "Être soulagé(e)" = to feel relief after tension or worry. Très courant : "je suis soulagé que tout se soit bien passé". <em>Déçu(e)</em> = disappointed. <em>Inquiet/inquiète</em> = worried/anxious. <em>Pressé(e)</em> = in a hurry.' },
+],
+
+// ─────────────────────── SET 3 — B2 Upper-Intermediate ───────────────────────
+[
+// B2 Grammar
+{ level:"B2", question:'"Si elle avait mieux préparé son entretien, elle ___ le poste."',
+  options:["aurait obtenu","obtiendrait","avait obtenu","aurait obtenir"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">obtenir — conditionnel passé</div><div class="conj-grid"><span>j\'<b>aurais obtenu</b></span><span>nous <b>aurions obtenu</b></span><span>tu <b>aurais obtenu</b></span><span>vous <b>auriez obtenu</b></span><span>il/elle <b>aurait obtenu</b></span><span>ils/elles <b>auraient obtenu</b></span></div></div>',
+  explanation:'<strong>Aurait obtenu</strong> (conditionnel passé) est correct. Condition irréelle dans le passé : <em>si + plus-que-parfait → conditionnel passé</em>. L\'entretien est terminé, elle n\'a pas eu le poste. "Obtiendrait" (conditionnel présent) s\'utilise avec l\'imparfait : "si elle préparait mieux…"' },
+
+{ level:"B2", question:'"Bien qu\'il ___ très fatigué, il est resté jusqu\'à la fin de la réunion."',
+  options:["soit","est","était","sera"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">être — subjonctif présent</div><div class="conj-grid"><span>que je <b>sois</b></span><span>que nous <b>soyons</b></span><span>que tu <b>sois</b></span><span>que vous <b>soyez</b></span><span>qu\'il/elle <b>soit</b></span><span>qu\'ils/elles <b>soient</b></span></div></div>',
+  explanation:'<strong>Soit</strong> (subjonctif) est correct. <em>Bien que</em> (although) déclenche toujours le subjonctif — sans exception. Même règle pour : <em>quoique, pour que, afin que, à moins que, avant que</em>. Subjonctif d\'<em>être</em> : je <b>sois</b>, tu <b>sois</b>, il/elle <b>soit</b>.' },
+
+{ level:"B2", question:'"Il n\'y a plus ___ lait dans le frigo — il faut en racheter."',
+  options:["de","du","le","un"], answer:0,
+  explanation:'<strong>De</strong> est correct. Après une négation (ne…pas, ne…plus, ne…jamais), les articles partitifs (<em>du, de la, des</em>) et indéfinis (<em>un, une, des</em>) deviennent <em>de</em> (ou <em>d\'</em> devant voyelle). "Il y a du lait" → "Il n\'y a plus <b>de</b> lait."' },
+
+{ level:"B2", question:'"Sa voiture était en panne — il l\'a fait ___ par le garagiste."',
+  options:["réparer","réparée","réparant","réparation"], answer:0,
+  explanation:'<strong>Réparer</strong> (infinitif) est correct. La construction causative <em>faire + infinitif</em> = faire faire quelque chose par quelqu\'un d\'autre. L\'infinitif est invariable : "elle a fait réparer" (jamais "faite réparer"). Autres exemples : faire construire une maison, se faire couper les cheveux.' },
+
+{ level:"B2", question:'Pourquoi "Pourriez-vous m\'aider ?" sonne-t-il plus poli que "Pouvez-vous m\'aider ?" ?',
+  options:["Le conditionnel adoucit la demande","Le conditionnel exprime le futur","Le conditionnel indique le doute","Le conditionnel remplace le subjonctif"], answer:0,
+  explanation:'<strong>Le conditionnel adoucit la demande</strong> — c\'est son rôle de politesse. <em>Pourriez-vous</em> est plus doux que <em>pouvez-vous</em>. Même logique : "je <em>voudrais</em>" (poli) vs "je <em>veux</em>" (direct). "J\'<em>aimerais</em> un café" est plus poli qu\'exiger "donnez-moi un café".' },
+
+// B2 Vocabulary
+{ level:"B2", question:'"Il a posé sa ___ après un conflit avec son directeur — il ne travaille plus là-bas."',
+  options:["démission","candidature","promotion","retraite"], answer:0,
+  explanation:'<strong>Démission</strong> = resignation. "Poser sa démission" ou "donner sa démission" = to hand in one\'s notice. C\'est un mot du quotidien professionnel en France. <em>Candidature</em> = job application. <em>Promotion</em> = promotion. <em>Retraite</em> = retirement (partir en retraite).' },
+
+{ level:"B2", question:'"Cette vidéo a été ___ des milliers de fois sur les réseaux sociaux en moins d\'une heure."',
+  options:["partagée","filmée","commentée","supprimée"], answer:0,
+  explanation:'<strong>Partagée</strong> est correct. <em>Partager une publication / une vidéo</em> = to share content online. C\'est un verbe clé du vocabulaire numérique français. <em>Commenter</em> = to comment, <em>supprimer</em> = to delete, <em>filmer</em> = to film/record.' },
+
+{ level:"B2", question:'"Son nouveau ___ lui convient parfaitement : bonne ambiance, horaires flexibles et beau salaire."',
+  options:["poste","loyer","trajet","stage"], answer:0,
+  explanation:'<strong>Poste</strong> = job position. "Son poste lui convient" = the job suits her. Vocabulaire courant : <em>un poste à temps plein</em> (full-time), <em>postuler à un poste</em> (to apply for a position). <em>Stage</em> = internship. <em>Trajet</em> = commute/journey. <em>Loyer</em> = rent.' },
+
+{ level:"B2", question:'"Les magasins font de grandes réductions pendant les ___ — c\'est le bon moment pour faire des achats."',
+  options:["soldes","fêtes","marchés","livraisons"], answer:0,
+  explanation:'<strong>Soldes</strong> = the official sales. En France, les soldes sont réglementés : deux périodes par an (soldes d\'été et soldes d\'hiver), avec des dates fixées par l\'État. <em>Une promotion / une promo</em> = a general discount at any time. "Faire les soldes" = to go sale shopping.' },
+
+{ level:"B2", question:'"Après un projet très intense, il a pris quelques jours de ___ pour se reposer."',
+  options:["congé","poste","stage","retard"], answer:0,
+  explanation:'<strong>Congé</strong> = leave / time off work. "Prendre un congé" ou "être en congé" = to be on leave. <em>Les congés payés</em> (paid holidays) sont un acquis social fondamental en France depuis 1936 — les salariés ont droit à cinq semaines par an. <em>Stage</em> = internship, <em>retard</em> = delay.' },
+
+// B2 Vocabulary continued
+{ level:"B2", question:'"Le ___ s\'est démocratisé depuis la pandémie — de nombreuses entreprises l\'ont adopté de façon permanente."',
+  options:["télétravail","bénévolat","intérim","covoiturage"], answer:0,
+  explanation:'<strong>Télétravail</strong> = remote work / working from home. L\'un des mots professionnels les plus courants en France depuis 2020. "Être en télétravail" = to work from home. "Un accord de télétravail" = a remote working agreement. <em>Intérim</em> = temp work. <em>Covoiturage</em> = car sharing.' },
+
+{ level:"B2", question:'"Pour obtenir des médicaments à la pharmacie, le médecin vous écrit une ___."',
+  options:["ordonnance","consultation","mutuelle","feuille de soins"], answer:0,
+  explanation:'<strong>Ordonnance</strong> = prescription. "Le médecin m\'a fait une ordonnance pour des antibiotiques." Certains médicaments sont "sur ordonnance" (prescription only), d\'autres "sans ordonnance" (over the counter / OTC). La feuille de soins = le document pour le remboursement par la Sécu.' },
+
+{ level:"B2", question:'"Le ___ refuse de faire les réparations — les locataires vont contacter l\'agence."',
+  options:["propriétaire","locataire","syndic","notaire"], answer:0,
+  explanation:'<strong>Propriétaire</strong> = landlord / owner. <em>Locataire</em> = tenant (the renter). <em>Syndic</em> = the building management company (for co-owned buildings). <em>Notaire</em> = notary (required for property sales in France). Ces rôles sont fondamentaux pour la vie en France.' },
+
+{ level:"B2", question:'"Les contrôleurs aériens sont en ___ depuis ce matin — tous les vols sont annulés."',
+  options:["grève","retard","panne","manifestation"], answer:0,
+  explanation:'<strong>Grève</strong> = strike. "Être en grève" / "faire grève" = to be on strike. La France a une forte tradition d\'action syndicale. <em>Manifestation</em> (ou "manif") = a protest march in the streets — c\'est différent d\'une grève (workers stopping work).' },
+
+{ level:"B2", question:'"Nous avons décidé de reporter la réunion ___ de la situation actuelle." — Quel groupe formel ?',
+  options:["en raison","à cause","grâce à","suite à"], answer:0,
+  explanation:'<strong>En raison de</strong> (+ nom) = because of / due to, en registre formel. <em>À cause de</em> = because of (neutre ou négatif). <em>Grâce à</em> = thanks to (cause positive). <em>Suite à</em> = following (très administratif : "suite à votre demande"). "En raison de" est le choix standard dans l\'écrit professionnel.' },
+],
+
+// ─────────────────────── SET 4 — C1/C2 Expert (locked until Set 3 mastered) ──
+[
+// C1 Grammar
+{ level:"C1", question:'"Le général ___ ses troupes vers la capitale." — Identifiez le temps littéraire utilisé.',
+  options:["mena","a mené","menait","mènera"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">mener — passé simple</div><div class="conj-grid"><span>je <b>menai</b></span><span>nous <b>menâmes</b></span><span>tu <b>menas</b></span><span>vous <b>menâtes</b></span><span>il/elle <b>mena</b></span><span>ils/elles <b>menèrent</b></span></div></div>',
+  explanation:'<strong>Mena</strong> (passé simple) est correct. Le passé simple est le temps du récit littéraire et historique formel — il remplace le passé composé dans l\'écrit soigné. On ne l\'utilise pas à l\'oral. Reconnaître le passé simple est indispensable au niveau C1. <em>Mener → il mena</em>.' },
+
+{ level:"C1", question:'"Quoi qu\'il ___, je le soutiendrai toujours."',
+  options:["fasse","fait","fera","ferait"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">faire — subjonctif présent</div><div class="conj-grid"><span>que je <b>fasse</b></span><span>que nous <b>fassions</b></span><span>que tu <b>fasses</b></span><span>que vous <b>fassiez</b></span><span>qu\'il/elle <b>fasse</b></span><span>qu\'ils/elles <b>fassent</b></span></div></div>',
+  explanation:'<strong>Fasse</strong> (subjonctif) est correct. <em>Quoi que</em> (whatever) déclenche toujours le subjonctif : <em>quoi qu\'il fasse</em> = "whatever he may do." Ne pas confondre avec <em>quoique</em> (un seul mot = although), qui prend aussi le subjonctif : "quoiqu\'il soit fatigué."' },
+
+{ level:"C1", question:'"Les lettres qu\'il a ___." (verbe : envoyer) — Quel accord du participe passé ?',
+  options:["envoyées","envoyé","envoyés","envoyée"], answer:0,
+  explanation:'<strong>Envoyées</strong> est correct. Avec <em>avoir</em>, le participe passé s\'accorde avec le COD quand celui-ci est placé <em>avant</em> le verbe. "Les lettres" (féminin pluriel) est le COD et il précède le verbe via <em>que</em> → <em>envoyées</em>.' },
+
+{ level:"C1", question:'Discours indirect : "Il m\'a dit : «\u00a0Je viendrai demain.\u00a0»" — Transformez.',
+  options:["Il m\'a dit qu\'il viendrait le lendemain.","Il m\'a dit qu\'il viendra demain.","Il m\'a dit qu\'il venait le lendemain.","Il m\'a dit qu\'il serait venu le lendemain."], answer:0,
+  explanation:'<strong>Viendrait le lendemain</strong> est correct. Dans le discours indirect au passé, les temps reculent : futur simple → conditionnel présent. Les indicateurs temporels changent aussi : <em>demain</em> → <em>le lendemain</em>, <em>hier</em> → <em>la veille</em>, <em>aujourd\'hui</em> → <em>ce jour-là</em>.' },
+
+{ level:"C1", question:'"C\'est un auteur ___ le style est inimitable." — Quel pronom relatif ?',
+  options:["dont","que","qui","lequel"], answer:0,
+  explanation:'<strong>Dont</strong> est correct. <em>Dont</em> remplace <em>de + nom/pronom</em> : "le style <b>de cet auteur</b>" → "un auteur <b>dont</b> le style est inimitable" (whose style). On utilise <em>dont</em> chaque fois que la relative contient un verbe ou une expression qui exige <em>de</em>, ou pour exprimer la possession.' },
+
+// C2 Grammar & Vocabulary
+{ level:"C2", question:'"Je n\'ai ___ cinq minutes à vous accorder." — Quel mot signifie "seulement" ?',
+  options:["que","pas","plus","guère"], answer:0,
+  explanation:'<strong>Que</strong> est correct. <em>Ne…que</em> exprime la restriction et signifie "seulement" — ce n\'est PAS une négation. "Je n\'ai que cinq minutes" = j\'ai bien cinq minutes, pas plus. Comparez : "je n\'ai <em>pas</em> cinq minutes" (je ne les ai pas du tout). <em>Ne…guère</em> = hardly. <em>Ne…plus</em> = no longer.' },
+
+{ level:"C2", question:'"Après ___ des heures à attendre, il abandonna." — Quelle forme après <em>après</em> ?',
+  options:["avoir passé","passer","ayant passé","avait passé"], answer:0,
+  explanation:'<strong>Avoir passé</strong> (infinitif passé) est correct. Après <em>après</em>, le français exige toujours l\'infinitif passé (avoir/être + pp) : "après avoir passé". L\'infinitif présent après <em>après</em> est incorrect. "Ayant passé" est un participe présent, non utilisé après <em>après</em>.' },
+
+{ level:"C2", question:'"___ il réussisse ___ il échoue, nous l\'aiderons." — Quelle conjonction paire ?',
+  options:["Qu\' … ou qu\'","Si … ou si","Soit … soit","Bien que … ou"], answer:0,
+  explanation:'<strong>Que…ou que + subjonctif</strong> = "whether…or": "qu\'il réussisse ou qu\'il échoue" = whether he succeeds or fails. Comparez : <em>soit…soit</em> = either…or (choix mutuellement exclusifs). <em>Si…ou si</em> s\'utilise dans les interrogatives indirectes. Construction fréquente en français formel.' },
+
+{ level:"C2", question:'"La plupart des invités ___ déjà partis avant minuit." — Quel accord ?',
+  options:["étaient","était","est","a été"], answer:0,
+  explanation:'<strong>Étaient</strong> (pluriel) est correct. <em>La plupart de + nom</em> prend toujours un verbe au pluriel : "la plupart des gens <strong>pensent</strong>", "la plupart du temps, ils <strong>arrivent</strong> en retard." Différent de <em>la moitié</em> ou <em>une partie</em> qui peuvent se construire au singulier ou au pluriel selon le contexte.' },
+
+{ level:"C2", question:'"Ce travail lui permet vraiment de ___ : elle s\'y sent accomplie et heureuse."',
+  options:["s\'épanouir","se plaindre","s\'ennuyer","se méfier"], answer:0,
+  explanation:'<strong>S\'épanouir</strong> = to flourish, blossom, find fulfilment. Du verbe <em>épanouir</em> (faire ouvrir une fleur). Très courant en français moderne : "s\'épanouir au travail / dans sa vie personnelle", "un enfant qui s\'épanouit". Le nom <em>épanouissement</em> est tout aussi fréquent. Un mot qu\'un francophone cultivé utilise naturellement.' },
+
+// C1/C2 Vocabulary & Grammar continued
+{ level:"C1", question:'"C\'est la plus belle ville que j\'___ jamais visitée." — Subjonctif passé de <em>avoir</em> ?',
+  options:["aie","ai","avais","aurais"], answer:0,
+  conjugation:'<div class="conj-block"><div class="conj-label">avoir — subjonctif passé</div><div class="conj-grid"><span>que j\'<b>aie eu</b></span><span>que nous <b>ayons eu</b></span><span>que tu <b>aies eu</b></span><span>que vous <b>ayez eu</b></span><span>qu\'il/elle <b>ait eu</b></span><span>qu\'ils/elles <b>aient eu</b></span></div></div>',
+  explanation:'<strong>Aie</strong> (subjonctif de <em>avoir</em>) est correct. Après un superlatif ou "le seul / le premier / le dernier", la relative prend le subjonctif en français soigné : "la plus belle ville que j\'aie visitée". Le passé du subjonctif = <em>que j\'aie</em> + pp. Marque d\'un français C1 solide.' },
+
+{ level:"C1", question:'"___ ses nombreuses difficultés, il a réussi à mener le projet à terme." — Quel mot pour "in spite of" + nom ?',
+  options:["Malgré","Bien que","Quoique","Cependant"], answer:0,
+  explanation:'<strong>Malgré + nom</strong> = despite / in spite of (préposition). <em>Bien que</em> et <em>quoique</em> sont des conjonctions (suivies d\'un verbe au subjonctif). <em>Cependant</em> = however (adverbe). En français soigné, la distinction malgré/bien que est fondamentale.' },
+
+{ level:"C2", question:'"Ses propos ont ___ un vif débat parmi les spécialistes." — Quel verbe soutenu ?',
+  options:["suscité","créé","fait","causé"], answer:0,
+  explanation:'<strong>Susciter</strong> (C2) = to arouse, elicit, give rise to. "Susciter un débat / de l\'intérêt / des questions / l\'admiration" — expressions fixes très communes en registre soutenu. Plus précis que <em>créer</em> (générique) ou <em>causer</em> (implies harm). <em>Susciter</em> évoque quelque chose qui se lève naturellement.' },
+
+{ level:"C1", question:'"Le rapport ___ je vous ai parlé hier sera publié la semaine prochaine." — Quel pronom relatif ?',
+  options:["dont","duquel","lequel","auquel"], answer:0,
+  explanation:'<strong>Dont</strong> est correct. <em>Parler de quelque chose</em> → pronom relatif = <em>dont</em>. "Le rapport <b>dont</b> je vous ai parlé" = the report I told you about. Règle : quand le verbe de la relative est suivi de <em>de</em>, on utilise <em>dont</em>. <em>Duquel</em> s\'emploie après une préposition composée ("à côté duquel", "en face duquel").' },
+
+{ level:"C2", question:'"La décision fut contestée ; ___, elle fut appliquée sans délai." — Connecteur le plus soutenu pour "however" ?',
+  options:["néanmoins","mais","pourtant","cependant"], answer:0,
+  explanation:'<strong>Néanmoins</strong> est le plus soutenu. Hiérarchie de registre : <em>mais</em> (courant) < <em>pourtant / cependant</em> (écrit standard) < <em>néanmoins / toutefois</em> (soutenu) < <em>nonobstant</em> (très formel/juridique). Pour un texte académique ou officiel, <em>néanmoins</em> est l\'outil idéal.' },
+]
+
+]; // end QUESTION_SETS
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HINTS  — HINTS[setIndex][questionIndex within that set]
+// Each hint is a mini grammar lesson relevant to the question, not a clue.
+// ══════════════════════════════════════════════════════════════════════════════
+const HINTS = [
+[
+// SET 0 — A2 Foundation: hints match Q0–Q14 in order
+'In French, the verb "to be" is <em>être</em>, and it changes for every person. The "we" form is <em>sommes</em>. Cheat sheet: je <em>suis</em>, tu <em>es</em>, il <em>est</em>, nous <em>sommes</em>, vous <em>êtes</em>, ils <em>sont</em>. Just like "I am" vs "we are" in English — each person gets its own form!',
+'In French, adjectives have to match the word they describe in gender. Feminine nouns get a feminine adjective form — usually by adding <em>-e</em>. The word for "dress" (<em>robe</em>) is feminine. Which form of <em>beau</em> is the feminine one? (Hint: it changes more than just adding an -e!)',
+'French negation uses TWO parts that wrap around the verb: <em>ne</em> BEFORE and <em>pas</em> AFTER. "He doesn\'t speak" = "Il <em>ne</em> parle <em>pas</em>." In casual spoken French, people often drop the <em>ne</em>, but in writing both parts are required. Which part is missing from "il ___ parle pas"?',
+'In French, you "HAVE" hunger, thirst, cold, and heat — you don\'t "BE" them! "I\'m thirsty" = "j\'<em>ai</em> soif" (I HAVE thirst). Same logic: j\'ai faim (hungry), j\'ai froid (cold), j\'ai chaud (hot). Using <em>être</em> here would sound very strange to a French speaker!',
+'A <em>boulangerie</em> is one of the heart-and-soul shops of French daily life — it\'s where you buy bread (especially the baguette), croissants, and pastries. The other options are completely different: <em>pharmacie</em> = chemist, <em>boucherie</em> = butcher\'s, <em>librairie</em> = bookshop (not a library — that\'s <em>bibliothèque</em>!).',
+'French family vocabulary is very logical! The children of your aunt or uncle are your <em>cousins/cousines</em>. Your brother or sister\'s children are your <em>neveux/nièces</em> (nephews/nieces). Your parents\' siblings are your <em>oncles/tantes</em>. Map the family tree and it all clicks into place!',
+'French weather phrases mostly use the impersonal <em>il fait</em> + adjective: <em>il fait beau</em> (nice), <em>il fait chaud</em> (hot), <em>il fait froid</em> (cold), <em>il fait mauvais</em> (bad/gloomy). Others use specific verbs: <em>il pleut</em> (it rains), <em>il neige</em> (it snows). Which option describes cloudy, rainy weather?',
+'Possessive adjectives in French match the NOUN, not the owner! A masculine noun always takes <em>mon/ton/son</em> even if the owner is female. <em>Sac</em> (bag) is masculine → <em>ton</em> sac. Compare: <em>ta</em> valise (feminine bag), <em>tes</em> affaires (plural). The noun decides — not who owns it!',
+'Shopping phrases are super useful to know! The quickest way to ask a price is <em>C\'est combien ?</em> You can also say <em>Ça coûte combien ?</em> or the more formal <em>Quel est le prix ?</em> All three mean the same thing. The other options (où, comment, quand) ask completely different questions!',
+'When ordering in a French café or restaurant, using the conditional is the polite, expected form. "Je <em>voudrais</em>" (I would like) is much warmer than "je <em>veux</em>" (I want). Think of it as the difference between "Can I have…?" and just "Give me…". Even children are taught to say <em>je voudrais</em>!',
+'"Avoir mal à" + a body part = to have pain there. It\'s always <em>avoir</em>, never <em>être</em>: j\'<em>ai</em> mal à la tête, au dos, aux dents. Think of it as "I HAVE a pain in my head" — French maps exactly onto the "have" construction. You\'ll use this phrase constantly when speaking French!',
+'<em>Trajet</em> = the journey itself (how long it takes to get from A to B). It\'s one of the most useful transport words: "le trajet dure deux heures." Compare: <em>billet</em> = ticket (what you buy), <em>quai</em> = platform (where you stand), <em>horaire</em> = timetable (the schedule of times).',
+'Clothing sizes! In French shops, when you\'re looking for a size, ask for a <em>taille</em>. For shoes, it\'s <em>pointure</em> instead. The useful phrase "Vous avez ceci en taille 40 ?" literally means "Do you have this in a size 40?". And once you try it on: "Ça me va bien" = it fits me well.',
+'<em>Prendre un verre</em> is the go-to expression for having a social drink in France — not "boire un verre" (which is correct but less natural for invitations). French social life revolves around this: l\'apéro, le café, le verre entre amis. "On prend un verre ?" is an invitation you\'ll hear constantly!',
+'<em>Se dépêcher</em> is a reflexive verb meaning "to hurry up". You\'ll hear "Dépêche-toi !" (hurry up! — to one person) or "Dépêchez-vous !" constantly in everyday French. Reflexive verbs have a little pronoun (me, te, se, nous, vous) that matches the subject — it\'s like doing the action to yourself.',
+],
+[
+// SET 1 — B1 Intermediate: hints match Q0–Q14 in order
+'French has two main past tenses for different types of events. The imparfait describes habits and repeated actions ("I used to..."). The passé composé describes single completed events. "Tous les week-ends" = every single weekend = a repeated habit! Which tense describes something done regularly in childhood?',
+'When a verb takes the preposition <em>à</em> before its object (like <em>écrire à quelqu\'un</em>), the pronoun replacing that person is <em>lui</em> (singular) or <em>leur</em> (plural). So "j\'ai écrit à ma sœur" → "je <em>lui</em> ai écrit." <em>La/l\'</em> are for direct objects (no preposition). <em>Y</em> is for things and places after <em>à</em>, not people.',
+'After <em>il faut que</em> (it\'s necessary that / you have to), the verb ALWAYS goes into the subjunctive. The subjunctive of <em>partir</em> follows this pattern: que je <em>parte</em>, tu <em>partes</em>, il <em>parte</em>. Notice the -e ending for "tu" — different from the normal present tense "tu pars"!',
+'The imparfait also describes a background action that was already happening when something ELSE interrupted it. Two clues here: (1) watching TV was an ongoing background activity, (2) the knock at the door (<em>a frappé</em> — passé composé) is the interruption. Ongoing background action → imparfait!',
+'Golden rule for <em>si</em> clauses in French: after <em>si</em> in a real/likely condition, the verb ALWAYS stays in the PRESENT tense. Never use the future or conditional after <em>si</em>! The result clause gets the future: "Si j\'<em>ai</em> le temps, je <em>viendrai</em>." This is one of the most common grammar mistakes in French!',
+'"Avoir du retard" means something is running late. One of the most useful phrases in France! Compare: <em>être en retard</em> (I am late — about yourself as a person), <em>avoir du retard</em> (the train/bus/project is running late). <em>Retour</em> = return journey, <em>départ</em> = departure time — different meanings!',
+'French meal names: <em>le déjeuner</em> = lunch (midday meal, typically 12h–14h). In France, lunch is traditionally the main meal of the day. <em>Le dîner</em> = dinner (evening meal). <em>Le petit-déjeuner</em> = breakfast. <em>Le goûter</em> = afternoon snack (around 4pm, especially for children). Don\'t mix them up!',
+'Health vocabulary: <em>la fièvre</em> = fever / high temperature. The thermometer reading (39°C) is your key clue — that\'s definitely a fever! Useful health words: <em>la toux</em> (cough), <em>le mal de gorge</em> (sore throat), <em>un rhume</em> (a cold), <em>une grippe</em> (the flu). These come up constantly in daily French life.',
+'<em>Le loyer</em> = rent — the monthly payment for housing. Super important for adult life in France! "Mon loyer est trop cher" is a very common sentence. <em>Salaire</em> = salary/wages. <em>Prêt</em> = loan (like a mortgage). <em>Budget</em> = budget. <em>Loyer</em> specifically means the rent paid to a landlord.',
+'<em>Ravi(e)</em> means delighted or thrilled. "Je suis ravi(e) de vous rencontrer" is a warm, genuine way to say you\'re pleased to meet someone — more enthusiastic than just <em>content(e)</em>. You\'ll hear it in professional settings, social situations, and everyday life. It\'s the kind of word that makes you sound very natural in French!',
+'<em>Rater</em> is the everyday verb for "to miss" in colloquial French. "J\'ai raté le bus / le train / mon examen." Its synonym <em>manquer</em> is slightly more formal. Even more informal: <em>louper</em>. The key is that "rater" has become THE default spoken French verb for missing transport or failing at something.',
+'"Réserver une table" is the standard phrase for booking a restaurant — you\'ll use this on the phone constantly in France. Note: "une table pour deux" = a table for two. If the restaurant can\'t accommodate you: "nous sommes complets" (we\'re full). If you want to cancel: "annuler la réservation".',
+'<em>Mot de passe</em> = password. This is one of the most modern and essential vocabulary items! The phrase "j\'ai oublié mon mot de passe" (I forgot my password) is universally relatable. Note that French has adapted many tech terms: <em>le mail/l\'e-mail</em>, <em>le réseau social</em>, <em>télécharger</em> (to download).',
+'<em>Se retrouver</em> is THE verb for meeting up with friends or family at a specific place. The crucial distinction: <em>se retrouver</em> = meeting up (you already know each other), while <em>se rencontrer</em> = meeting for the first time. "On se retrouve" is probably in the top 10 phrases of French social life!',
+'"Être soulagé(e)" captures that feeling of relief when something stressful resolves well. Very common after exams, medical results, travel stress. Useful emotion vocabulary: <em>soulagé</em> (relieved), <em>stressé</em> (stressed), <em>inquiet/inquiète</em> (worried), <em>épuisé</em> (exhausted), <em>ravi</em> (delighted).',
+],
+[
+// SET 2 — B2 Upper-Intermediate: hints match Q0–Q14 in order
+'This is the "what WOULD HAVE happened IF..." structure for imaginary PAST situations. The "if" part uses the plus-que-parfait (had + done): <em>si elle avait préparé</em>. The result uses the conditionnel passé (would have + done): <em>elle aurait obtenu</em>. The interview is over — the outcome is already set.',
+'<em>Bien que</em> (although/even though) ALWAYS requires the subjunctive, no exceptions. Think of <em>bien que</em> as a switch that automatically flips the verb into subjunctive mode. The subjunctive of <em>être</em> for "he/she" is <em>soit</em> — very different from the normal indicative <em>est</em>!',
+'After any negation (ne...pas, ne...plus, ne...jamais), partitive articles <em>du, de la, des</em> and indefinite articles <em>un, une, des</em> all shrink down to just <em>de</em> (or <em>d\'</em> before a vowel). The negation "erases" the specific article. "Il y a du lait" → "Il n\'y a plus <em>de</em> lait." Clean rule, clean application!',
+'<em>Faire + infinitive</em> = to have something done by someone else — like outsourcing the action. "Il a fait réparer sa voiture" = he had his car fixed (he didn\'t fix it himself!). The infinitive after <em>faire</em> is ALWAYS invariable — never add agreement endings. This causative construction is very common in French.',
+'The conditional tense does double duty in French: hypotheticals AND politeness. "Pourriez-vous m\'aider ?" uses the conditional to soften the request — more indirect and more polite than "pouvez-vous". Other polite conditional forms: "je <em>voudrais</em>" (I\'d like), "j\'<em>aimerais</em>" (I\'d love to). This register shift is key at B2.',
+'<em>Démission</em> = resignation from a job. "Poser/donner sa démission" = to hand in your notice. A very common word in French professional life — in news headlines, at work, in conversation. Compare: <em>licenciement</em> = being fired, <em>départ à la retraite</em> = retirement, <em>candidature</em> = job application.',
+'<em>Partager</em> in the digital age means "to share" content — a post, video, photo. "Cette vidéo a été partagée" = this video was shared (passive voice + past participle). One of the most-used verbs in French social media. Other digital verbs: <em>liker</em> (to like), <em>commenter</em> (to comment), <em>s\'abonner</em> (to subscribe).',
+'<em>Un poste</em> = a job position or post. "Son poste lui convient" = the job suits him/her. Common in professional French: <em>un poste à temps plein</em> (full-time), <em>un poste à mi-temps</em> (part-time), <em>postuler à un poste</em> (to apply for a position). Don\'t confuse with <em>la poste</em> (the post office)!',
+'<em>Les soldes</em> = the official sales (regulated by the French government, twice a year). During les soldes, prices drop 30–70%. "Faire les soldes" = to go sale shopping. <em>Une promotion/promo</em> = any general discount at any time. <em>Une vente privée</em> = a preview/private sale. These distinctions matter in French retail!',
+'<em>Les congés payés</em> = paid holidays — 5 weeks per year, guaranteed by French law since 1936! "Prendre un congé" = to take time off. "Être en congé" = to be on leave. Compare: <em>un arrêt maladie</em> = sick leave, <em>un congé maternité/paternité</em> = maternity/paternity leave.',
+'<em>Télétravail</em> entered everyday French around 2020 and is now inescapable. "Je suis en télétravail lundi" = I\'m working from home on Monday. The key distinction: <em>le télétravail</em> (remote work, the concept) vs <em>travailler à domicile</em> (working at home, the action). Related: <em>un bureau partagé</em> (shared workspace), <em>un espace de coworking</em>.',
+'An <em>ordonnance</em> is a written prescription from a doctor. In France, <em>la médecine</em> is a three-tier system: doctor → ordonnance → pharmacie → remboursement by <em>la Sécurité sociale</em>. Key distinction: médicaments <em>sur ordonnance</em> (prescription-only) vs <em>sans ordonnance</em> / <em>en vente libre</em> (over the counter).',
+'<em>Propriétaire</em> vs <em>locataire</em>: the owner vs the renter. In France, the rental relationship is heavily regulated. <em>Un bail</em> = a lease agreement. <em>Une caution</em> = security deposit. <em>Un état des lieux</em> = inventory of the flat (done at move-in and move-out). This vocabulary is essential for adult life in France.',
+'<em>La grève</em> = industrial strike (workers stop working). <em>La manifestation / la manif</em> = a street protest. They\'re related but distinct: you can have a manif without a grève, and vice versa. <em>Un préavis de grève</em> = advance strike notice. France has constitutional protection for both the right to strike and to protest.',
+'"En raison de" is the formal, neutral connector meaning "because of / due to." It\'s the professional email and official document go-to. Compare: <em>à cause de</em> (because of — slightly casual or negative), <em>grâce à</em> (thanks to — positive outcome), <em>suite à</em> (following — very administrative). Register awareness is key at B2!',
+],
+[
+// SET 3 — C1/C2 Expert: hints match Q0–Q14 in order
+'The passé simple is the "storytelling" past tense used in formal written French — novels, newspapers, history — but almost never spoken. You don\'t need to produce it yourself, but you must RECOGNISE it! Common endings: il parl<em>a</em> (-er verbs), il fin<em>it</em> (-ir verbs), il v<em>oulut</em> (irregular). See the pattern?',
+'<em>Quoi que</em> (two words) means "whatever" or "no matter what" and always triggers the subjunctive. "Quoi qu\'il fasse" = whatever he does. The subjunctive of <em>faire</em> for "he" is <em>fasse</em>. Don\'t confuse with <em>quoique</em> (one word = although) — also takes the subjunctive, but has a different meaning!',
+'With <em>avoir</em> verbs, the past participle agrees with a preceding direct object (COD). The relative pronoun <em>que</em> often brings the COD forward. "Les lettres <em>que</em> j\'ai envoyées" — <em>que</em> = les lettres (feminine plural) comes BEFORE the verb → the participle gets feminine plural: <em>envoyées</em>.',
+'In reported speech after a past verb, tenses backshift — like pressing rewind. Future → conditional: "Je viendrai" → "il a dit qu\'il <em>viendrait</em>". Time words shift too: <em>demain</em> → <em>le lendemain</em>, <em>hier</em> → <em>la veille</em>, <em>aujourd\'hui</em> → <em>ce jour-là</em>. It\'s a systematic transformation!',
+'<em>Dont</em> replaces <em>de + noun</em>. When a verb or expression requires <em>de</em> (like <em>parler de, avoir besoin de, être fier de</em>), or when you want to express possession ("whose"), use <em>dont</em>. "Le style <em>de cet auteur</em>" → "un auteur <em>dont</em> le style est inimitable" (whose style...).',
+'<em>Ne...que</em> means "only" — and it\'s NOT a negation! "Je n\'ai que cinq minutes" = I DO have five minutes — just five. Compare: "je n\'ai <em>pas</em> cinq minutes" = I don\'t have any five minutes at all. The key: <em>ne...pas</em> = negation; <em>ne...que</em> = restriction (only). Saying <em>seulement</em> works too but <em>ne...que</em> sounds more elegant.',
+'After <em>après</em> (after), French always needs the infinitif passé: avoir/être + past participle. Think "after HAVING done" — the action was completed before the next one. "Après avoir mangé" = after having eaten / after eating. The present infinitive after <em>après</em> is WRONG. Contrast with <em>avant de</em> which just takes the plain infinitive.',
+'<em>Que...ou que</em> = "whether...or" for alternatives involving full clauses, and always triggers the subjunctive. "Qu\'il réussisse ou qu\'il échoue" = whether he succeeds or fails. Compare: <em>soit...soit</em> = either...or (for simpler exclusive choices like "soit lundi, soit mardi"). This construction appears in formal essays and speeches.',
+'<em>La plupart</em> always takes a PLURAL verb — even though it looks singular! Think of it as representing a group: "most guests HAD LEFT" = "la plupart des invités <em>étaient</em> partis." This differs from <em>la moitié</em> (half) which can go either way. When in doubt with <em>la plupart</em>: always plural!',
+'<em>S\'épanouir</em> comes from the image of a flower opening up. In everyday French it means to thrive, flourish, feel fully yourself. Very common: "s\'épanouir au travail" (to thrive at work), "un enfant qui s\'épanouit" (a child who is blossoming). The noun <em>épanouissement</em> is equally frequent. A word any educated French speaker uses naturally.',
+'After superlatives (<em>le plus, le moins, le seul, le premier, le dernier</em>), the verb in the relative clause goes into the subjunctive in careful French: "la plus belle ville que j\'<em>aie</em> visitée". This reflects subtle doubt about the uniqueness. The subjonctif passé = <em>que j\'aie</em> + past participle. A reliable C1 marker.',
+'<em>Malgré</em> is a preposition meaning "despite / in spite of" — always followed directly by a noun or pronoun. Never a conjugated verb. Contrast with <em>bien que / quoique</em> (conjunctions + subjunctive). At C1, mastering these concessive connectors is essential: malgré + noun, bien que/quoique + subjunctive, même si + indicatif.',
+'<em>Susciter</em> is a high-register verb meaning to arouse, elicit, or give rise to. It collocates with: <em>susciter de l\'intérêt / un débat / des questions / l\'admiration / la polémique</em>. More refined than <em>provoquer</em> (which implies intent) or <em>créer</em> (generic). Used extensively in journalism, academic writing, and formal speech.',
+'<em>Dont</em> is one of the trickiest relative pronouns. The key trigger: if the verb or expression in the clause requires <em>de</em>, use <em>dont</em>. "Parler de qqch" → "le sujet <em>dont</em> je parle". Reserve <em>duquel</em> for prepositions other than simple <em>de</em>: "la table <em>au-dessous de laquelle</em>…" or "la ville <em>à côté de laquelle</em>…"',
+'French adversative connectors form a clear hierarchy by register. At the top, <em>néanmoins</em> and <em>toutefois</em> signal formal written language. <em>Cependant</em> is slightly less formal. <em>Pourtant</em> adds an emotional tone. <em>Mais</em> is the everyday spoken connector. Choosing correctly signals your level of written French mastery.',
+]
+];
+
+
+
+
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'frenchQuizProgress';
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { sessions: [], currentSetIndex: 0, masteredSets: [], flaggedQuestions: [] };
+}
+
+function saveProgress(p) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// APP STATE
+// ══════════════════════════════════════════════════════════════════════════════
+let progress, currentQ, score, setScore, currentSetTotal, answered, sessionBreakdown, currentQuestions;
+
+const LEVELS = ['A2','B1','B2','C1','C2'];
+const SET_NAMES = ['Set 1 — A2 Foundation', 'Set 2 — B1 Intermediate', 'Set 3 — B2 Upper-Intermediate', 'Set 4 — C1/C2 Expert'];
+const BADGE_CLASSES = { A2:'badge-a2', B1:'badge-b1', B2:'badge-b2', C1:'badge-c1', C2:'badge-c2' };
+const LEVEL_COLORS = { A2:'#3b82f6', B1:'#8b5cf6', B2:'#f59e0b', C1:'#ec4899', C2:'#22c55e' };
+const BK_COLORS = {
+  A2:['#dbeafe','#1d4ed8'], B1:['#ede9fe','#6d28d9'],
+  B2:['#fef3c7','#b45309'], C1:['#fce7f3','#be185d'], C2:['#f0fdf4','#15803d']
+};
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Randomise which option slot (A/B/C/D) holds the correct answer.
+// origIdx records the question's position in its set so HINTS can be looked up.
+function shuffleOptions(q, origIdx, setIdx) {
+  const correct = q.options[q.answer];
+  const opts = shuffleArray([...q.options]);
+  return { ...q, options: opts, answer: opts.indexOf(correct), origIdx, setIdx };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════════
+function showScreen(id) {
+  ['screen-home','screen-quiz','screen-results','screen-scenarios','screen-chat','screen-translate'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'block' : 'none';
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WORD OF THE DAY
+// ══════════════════════════════════════════════════════════════════════════════
+const WOTD_LIST = [
+  { word: 'le café',         gender: 'masc.',  meaning: 'coffee / café',           example: 'On se retrouve au café du coin après le boulot ?' },
+  { word: 'la boulangerie',  gender: 'fém.',   meaning: 'bakery',                  example: 'Je passe à la boulangerie chaque matin pour acheter une baguette.' },
+  { word: 'se débrouiller',  gender: null,     meaning: 'to manage, to get by',    example: 'T\'inquiète pas, il sait se débrouiller tout seul.' },
+  { word: 'le quartier',     gender: 'masc.',  meaning: 'neighbourhood',           example: 'J\'habite dans un quartier très calme, près du parc.' },
+  { word: 'avoir l\'air',    gender: null,     meaning: 'to seem, to look like',   example: 'Tu as l\'air fatigué — tu as bien dormi ?' },
+  { word: 'le trajet',       gender: 'masc.',  meaning: 'journey, commute',        example: 'Mon trajet pour aller au bureau dure quarante minutes.' },
+  { word: 'la météo',        gender: 'fém.',   meaning: 'weather forecast',        example: 'D\'après la météo, il va pleuvoir tout le week-end.' },
+  { word: 'franchement',     gender: null,     meaning: 'honestly, frankly',       example: 'Franchement, je ne comprends pas pourquoi il a dit ça.' },
+  { word: 'le boulot',       gender: 'masc.',  meaning: 'work, job (informal)',    example: 'Je suis épuisé — c\'est la grosse période au boulot.' },
+  { word: 'la flemmardise',  gender: 'fém.',   meaning: 'laziness',                example: 'C\'est la flemmardise qui m\'a empêché de faire du sport ce matin.' },
+  { word: 'se plaindre',     gender: null,     meaning: 'to complain',             example: 'Il n\'arrête pas de se plaindre du froid, mais il ne met pas de manteau.' },
+  { word: 'la randonnée',    gender: 'fém.',   meaning: 'hike, hiking',            example: 'On a fait une belle randonnée en montagne ce week-end.' },
+  { word: 'le portable',     gender: 'masc.',  meaning: 'mobile phone',            example: 'J\'ai oublié mon portable chez moi — je me sens perdu sans lui !' },
+  { word: 'sympa',           gender: null,     meaning: 'nice, friendly (informal)',example: 'C\'est vraiment sympa chez toi, l\'appartement est super.' },
+  { word: 'le marché',       gender: 'masc.',  meaning: 'market',                  example: 'On va au marché le dimanche matin pour acheter des légumes frais.' },
+  { word: 'se rendre compte',gender: null,     meaning: 'to realise',              example: 'Je me suis rendu compte que j\'avais oublié mon rendez-vous.' },
+  { word: 'la sieste',       gender: 'fém.',   meaning: 'nap, afternoon rest',     example: 'En été, beaucoup de Français font une petite sieste après le déjeuner.' },
+  { word: 'carrément',       gender: null,     meaning: 'totally, absolutely',     example: 'C\'est carrément trop cher pour ce que c\'est !' },
+  { word: 'le loyer',        gender: 'masc.',  meaning: 'rent',                    example: 'À Paris, le loyer représente souvent la moitié du salaire.' },
+  { word: 'la file d\'attente',gender:'fém.',  meaning: 'queue, line',             example: 'Il y a une longue file d\'attente devant la boulangerie le dimanche matin.' },
+  { word: 'se régaler',      gender: null,     meaning: 'to enjoy a meal greatly', example: 'On s\'est vraiment régalés au restaurant hier soir.' },
+  { word: 'le frigo',        gender: 'masc.',  meaning: 'fridge (informal)',       example: 'Je dois faire des courses, il n\'y a plus rien dans le frigo.' },
+  { word: 'la grève',        gender: 'fém.',   meaning: 'strike',                  example: 'Il n\'y a pas de métro aujourd\'hui à cause d\'une grève.' },
+  { word: 'chouette',        gender: null,     meaning: 'great, cool (informal)',  example: 'C\'est chouette que tu puisses venir à la fête !' },
+  { word: 'le coup de main',  gender: 'masc.', meaning: 'a helping hand',          example: 'Tu peux me donner un coup de main pour déménager samedi ?' },
+  { word: 'la recette',      gender: 'fém.',   meaning: 'recipe',                  example: 'Ma grand-mère m\'a donné sa recette de tarte aux pommes.' },
+  { word: 'se fâcher',       gender: null,     meaning: 'to get angry',            example: 'Il ne faut pas se fâcher pour si peu — c\'est un petit malentendu.' },
+  { word: 'le bruit',        gender: 'masc.',  meaning: 'noise',                   example: 'Les voisins font trop de bruit le soir, c\'est insupportable.' },
+  { word: 'la crèche',       gender: 'fém.',   meaning: 'nursery, crèche',         example: 'On a enfin trouvé une place à la crèche pour notre fille.' },
+  { word: 'avoir honte',     gender: null,     meaning: 'to be ashamed',           example: 'J\'ai tellement honte — j\'ai complètement raté sa surprise.' },
+  { word: 'le coup de foudre',gender:'masc.',  meaning: 'love at first sight',     example: 'Ce fut un vrai coup de foudre quand ils se sont rencontrés à Lyon.' },
+  { word: 'la mutuelle',     gender: 'fém.',   meaning: 'top-up health insurance', example: 'En France, la mutuelle complète le remboursement de la Sécurité sociale.' },
+  { word: 'se dépêcher',     gender: null,     meaning: 'to hurry up',             example: 'Dépêche-toi ! On va rater le train !' },
+  { word: 'le cadeau',       gender: 'masc.',  meaning: 'gift, present',           example: 'J\'ai acheté un petit cadeau pour l\'anniversaire de ma collègue.' },
+  { word: 'la sortie',       gender: 'fém.',   meaning: 'outing, going out',       example: 'On organise une sortie au cinéma vendredi soir, tu viens ?' },
+  { word: 'avoir envie de',  gender: null,     meaning: 'to feel like, to want',   example: 'J\'ai vraiment envie d\'une bonne pizza ce soir.' },
+  { word: 'le congé',        gender: 'masc.',  meaning: 'leave, holiday',          example: 'Je prends une semaine de congé en août pour aller en Bretagne.' },
+  { word: 'la caissière',    gender: 'fém.',   meaning: 'cashier (female)',         example: 'La caissière était très souriante et nous a aidés sans problème.' },
+  { word: 'se souvenir de',  gender: null,     meaning: 'to remember',             example: 'Tu te souviens du restaurant où on a fêté son anniversaire ?' },
+  { word: 'le plat',         gender: 'masc.',  meaning: 'dish, main course',       example: 'Le plat du jour était un poulet rôti avec des légumes de saison.' },
+  { word: 'la poubelle',     gender: 'fém.',   meaning: 'bin, rubbish bin',        example: 'N\'oublie pas de descendre les poubelles — c\'est le jour de ramassage.' },
+  { word: 'en avoir marre',  gender: null,     meaning: 'to be fed up',            example: 'J\'en ai marre de la pluie — j\'ai besoin de soleil !' },
+  { word: 'le voisin',       gender: 'masc.',  meaning: 'neighbour',               example: 'Notre voisin du dessus fait du bruit jusqu\'à minuit chaque soir.' },
+  { word: 'la promenade',    gender: 'fém.',   meaning: 'walk, stroll',            example: 'On a fait une belle promenade le long de la Seine dimanche.' },
+  { word: 'se sentir',       gender: null,     meaning: 'to feel (a state)',       example: 'Je ne me sens pas très bien aujourd\'hui — j\'ai mal à la tête.' },
+  { word: 'le supermarché',  gender: 'masc.',  meaning: 'supermarket',             example: 'Je fais mes courses au supermarché du quartier le samedi matin.' },
+  { word: 'la canicule',     gender: 'fém.',   meaning: 'heatwave',                example: 'Avec cette canicule, il vaut mieux rester à l\'ombre l\'après-midi.' },
+  { word: 'franchir',        gender: null,     meaning: 'to cross, to pass',       example: 'Ils ont franchi la frontière à l\'aube pour éviter les embouteillages.' },
+  { word: 'le fleuriste',    gender: 'masc.',  meaning: 'florist',                 example: 'J\'ai acheté un bouquet de tulipes chez le fleuriste au coin de la rue.' },
+  { word: 'avoir du mal à',  gender: null,     meaning: 'to struggle to, to find it hard to', example: 'J\'ai du mal à me lever tôt le matin en hiver.' },
+];
+
+function renderWordOfDay() {
+  const dayIndex = Math.floor(Date.now() / 86400000); // changes each calendar day
+  const w = WOTD_LIST[dayIndex % WOTD_LIST.length];
+  document.getElementById('wotd-word').textContent = w.word;
+  const genderEl = document.getElementById('wotd-gender');
+  if (w.gender) {
+    genderEl.textContent = w.gender;
+    genderEl.style.display = 'inline-block';
+  } else {
+    genderEl.style.display = 'none';
+  }
+  document.getElementById('wotd-meaning').textContent = w.meaning;
+  document.getElementById('wotd-example').textContent = '\u201c' + w.example + '\u201d';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WEEKLY PROGRESS CHART
+// ══════════════════════════════════════════════════════════════════════════════
+function renderWeeklyChart(sessions) {
+  const canvas = document.getElementById('weekly-chart');
+  if (!canvas) return;
+  // Polyfill roundRect for older Safari
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      this.beginPath();
+      this.moveTo(x + r, y);
+      this.lineTo(x + w - r, y);
+      this.quadraticCurveTo(x + w, y, x + w, y + r);
+      this.lineTo(x + w, y + h - r);
+      this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      this.lineTo(x + r, y + h);
+      this.quadraticCurveTo(x, y + h, x, y + h - r);
+      this.lineTo(x, y + r);
+      this.quadraticCurveTo(x, y, x + r, y);
+      this.closePath();
+    };
+  }
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || canvas.parentElement.offsetWidth || 600;
+  const H = 130;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Build last-7-days buckets (keyed by YYYY-MM-DD)
+  const today = new Date();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const label = d.toLocaleDateString('en-GB', { weekday: 'short' });
+    days.push({ key, label, scores: [] });
+  }
+  sessions.forEach(s => {
+    const key = new Date(s.date).toISOString().slice(0, 10);
+    const bucket = days.find(d => d.key === key);
+    if (bucket) bucket.scores.push(s.score);
+  });
+
+  // Compute best score per day (null if no sessions)
+  const values = days.map(d => d.scores.length ? Math.max(...d.scores) : null);
+  const hasAny = values.some(v => v !== null);
+
+  const PAD_L = 28, PAD_R = 8, PAD_T = 10, PAD_B = 28;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const MAX_SCORE = 10;
+
+  // Grid lines
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  [0, 5, 10].forEach(v => {
+    const y = PAD_T + chartH - (v / MAX_SCORE) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(PAD_L, y);
+    ctx.lineTo(PAD_L + chartW, y);
+    ctx.stroke();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `${10 * dpr / dpr}px system-ui, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(v, PAD_L - 5, y + 4);
+  });
+
+  const barW = Math.floor(chartW / 7 * 0.55);
+  const slotW = chartW / 7;
+
+  days.forEach((d, i) => {
+    const cx = PAD_L + slotW * i + slotW / 2;
+    const v  = values[i];
+
+    // Day label
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `10px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(d.label, cx, H - PAD_B + 14);
+
+    if (v === null) {
+      // Empty bar outline
+      const barH = chartH;
+      const x = cx - barW / 2;
+      const y = PAD_T;
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, barH, 4);
+      ctx.stroke();
+    } else {
+      const barH = Math.max(4, (v / MAX_SCORE) * chartH);
+      const x = cx - barW / 2;
+      const y = PAD_T + chartH - barH;
+      const isPerfect = v === 10;
+      const grad = ctx.createLinearGradient(0, y, 0, y + barH);
+      if (isPerfect) {
+        grad.addColorStop(0, '#22c55e');
+        grad.addColorStop(1, '#16a34a');
+      } else {
+        grad.addColorStop(0, '#4f86c6');
+        grad.addColorStop(1, '#0055a4');
+      }
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, barH, 4);
+      ctx.fill();
+
+      // Score label on top of bar
+      ctx.fillStyle = isPerfect ? '#15803d' : '#0055a4';
+      ctx.font = `bold 10px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(v, cx, y - 3);
+    }
+  });
+
+  if (!hasAny) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `13px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Complete a quiz to see your progress here', W / 2, H / 2 - 4);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════════
+function renderDashboard() {
+  progress = loadProgress();
+  const { sessions, currentSetIndex, masteredSets } = progress;
+  const setIdx = Math.min(currentSetIndex, QUESTION_SETS.length - 1);
+  const allMastered = masteredSets.length >= QUESTION_SETS.length;
+
+  // Stats
+  const scores = sessions.map(s => s.score);
+  document.getElementById('dash-attempts').textContent = sessions.length;
+  document.getElementById('dash-set').textContent = setIdx + 1;
+  document.getElementById('dash-best').textContent = scores.length ? Math.max(...scores) : '—';
+  document.getElementById('dash-avg').textContent = scores.length
+    ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : '—';
+
+  // Level mastery bars
+  const masteryData = {};
+  LEVELS.forEach(l => masteryData[l] = { correct:0, total:0, best:0 });
+  sessions.forEach(s => {
+    if (!s.levelBreakdown) return;
+    LEVELS.forEach(l => {
+      const d = s.levelBreakdown[l];
+      if (!d) return;
+      masteryData[l].correct += d.correct;
+      masteryData[l].total   += d.total;
+      const pct = d.total ? (d.correct/d.total)*100 : 0;
+      if (pct > masteryData[l].best) masteryData[l].best = pct;
+    });
+  });
+
+  const barsEl = document.getElementById('mastery-bars');
+  barsEl.innerHTML = '';
+  LEVELS.forEach(l => {
+    const d = masteryData[l];
+    const pct = d.total ? Math.round((d.correct/d.total)*100) : 0;
+    const star = d.best === 100 ? '⭐' : '';
+    const row = document.createElement('div');
+    row.className = 'mastery-row';
+    row.innerHTML = `
+      <span class="mastery-label">${l}</span>
+      <div class="mastery-bar-wrap">
+        <div class="mastery-bar-fill" style="width:${pct}%;background:${LEVEL_COLORS[l]}"></div>
+      </div>
+      <span class="mastery-pct" style="color:${LEVEL_COLORS[l]}">${d.total ? pct+'%' : '—'}</span>
+      <span class="mastery-star">${star}</span>
+    `;
+    barsEl.appendChild(row);
+  });
+
+  // Session history
+  const histEl = document.getElementById('history-list');
+  histEl.innerHTML = '';
+  if (!sessions.length) {
+    histEl.innerHTML = '<div class="empty-history">No sessions yet — take the quiz to get started!</div>';
+  } else {
+    [...sessions].reverse().slice(0,6).forEach(s => {
+      const d = new Date(s.date);
+      const dateStr = d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      const pct = Math.round((s.score/s.total)*100);
+      const row = document.createElement('div');
+      row.className = 'history-row';
+      row.innerHTML = `
+        <span class="history-date">${dateStr}</span>
+        <span class="history-set">Set ${s.setIndex+1}</span>
+        <span><span class="history-score">${s.score}/${s.total}</span><span class="history-pct">(${pct}%)</span></span>
+        ${s.perfect ? '<span class="history-perfect">★ Perfect</span>' : ''}
+      `;
+      histEl.appendChild(row);
+    });
+  }
+
+  // Practice any set panel
+  const practiceEl = document.getElementById('practice-sets');
+  practiceEl.innerHTML = '';
+  QUESTION_SETS.forEach((_, i) => {
+    const isMastered = masteredSets.includes(i);
+    const isUnlocked = i <= masteredSets.length;
+    const label = SET_NAMES[i];
+    const bestForSet = sessions.filter(s => s.setIndex === i).map(s => s.score);
+    const bestStr = bestForSet.length ? `Best: ${Math.max(...bestForSet)}/${QUESTION_SETS[i].length}` : 'Not attempted';
+    const row = document.createElement('div');
+    row.className = 'practice-row' + (isUnlocked ? '' : ' locked');
+    row.innerHTML = `
+      <div>
+        <div class="practice-row-name">${isMastered ? '✅ ' : ''}${label}</div>
+        <div class="practice-row-sub">${bestStr}</div>
+      </div>
+      ${isUnlocked
+        ? `<button class="btn-practice" onclick="startQuiz(${i})">Practice →</button>`
+        : '<span style="font-size:0.8rem;color:var(--muted)">🔒 Locked</span>'}
+    `;
+    practiceEl.appendChild(row);
+  });
+
+  // CTA button
+  const noteEl = document.getElementById('start-note');
+  if (allMastered) {
+    document.getElementById('start-btn').textContent = `Replay Set ${QUESTION_SETS.length} →`;
+    noteEl.textContent = '🎉 You\'ve mastered all four sets! Félicitations !';
+  } else {
+    document.getElementById('start-btn').textContent = `Start Set ${setIdx+1} →`;
+    noteEl.textContent = setIdx === 0 && !sessions.length
+      ? `${QUESTION_SETS[0].length} questions · A2 to C2 · Score 100% to unlock the next set`
+      : `Score 100% on Set ${setIdx+1} to unlock Set ${setIdx+2}`;
+    if (setIdx >= QUESTION_SETS.length - 1) noteEl.textContent = `Score 100% to master all sets!`;
+  }
+
+  renderWordOfDay();
+  // Chart renders after screen is shown so offsetWidth is available
+  showScreen('screen-home');
+  requestAnimationFrame(() => renderWeeklyChart(sessions));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// QUIZ
+// ══════════════════════════════════════════════════════════════════════════════
+function startQuiz(forceSetIdx) {
+  progress = loadProgress();
+  const setIdx = (forceSetIdx !== undefined)
+    ? Math.min(forceSetIdx, QUESTION_SETS.length - 1)
+    : Math.min(progress.currentSetIndex, QUESTION_SETS.length - 1);
+
+  // Build this set's questions (shuffled options + stamped setIdx)
+  const setQuestions = shuffleArray(
+    QUESTION_SETS[setIdx].map((q, i) => shuffleOptions(q, i, setIdx))
+  );
+
+  // Append any "Repeat later" questions from previous sessions
+  const flagged = (progress.flaggedQuestions || []).map(f =>
+    Object.assign(shuffleOptions(QUESTION_SETS[f.si][f.qi], f.qi, f.si), {
+      isRepeat: true,
+      repeatStreak: f.streak || 0   // consecutive correct answers so far (retire at 3)
+    })
+  );
+  progress.flaggedQuestions = [];   // clear — decisions made in selectAnswer
+  saveProgress(progress);
+
+  currentQuestions = [...setQuestions, ...flagged];
+  currentSetTotal  = setQuestions.length;   // for mastery gating
+  currentQ = 0;
+  score = 0;
+  setScore = 0;
+  answered = false;
+  sessionBreakdown = {};
+  LEVELS.forEach(l => sessionBreakdown[l] = { correct:0, total:0 });
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+function renderQuestion() {
+  const q = currentQuestions[currentQ];
+  answered = false;
+
+  document.getElementById('q-counter').textContent = `Question ${currentQ+1} / ${currentQuestions.length}`;
+  document.getElementById('q-score-live').textContent = `Score: ${score}`;
+  document.getElementById('progress-fill').style.width = `${(currentQ/currentQuestions.length)*100}%`;
+
+  const badge = document.getElementById('q-badge');
+  badge.textContent = q.level;
+  badge.className = 'badge ' + BADGE_CLASSES[q.level];
+
+  document.getElementById('question-text').innerHTML = q.question;
+
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  ['A','B','C','D'].forEach((lbl, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-marker">${lbl}</span>${q.options[i]}`;
+    btn.onclick = () => selectAnswer(i);
+    opts.appendChild(btn);
+  });
+
+  document.getElementById('explanation').className = 'explanation';
+  document.getElementById('next-btn').className = 'btn btn-primary next-btn';
+  document.getElementById('hint-panel').className = 'hint-panel';
+  document.getElementById('hint-btn').textContent = '💡 Show hint';
+
+  // Repeat later button state
+  const repeatBtn = document.getElementById('repeat-btn');
+  if (q.isRepeat) {
+    repeatBtn.className = 'repeat-btn is-repeat';
+    const streak = q.repeatStreak || 0;
+    repeatBtn.textContent = `🔁 Practice (${streak}/3 correct)`;
+    repeatBtn.disabled = true;
+  } else {
+    const flags = progress.flaggedQuestions || [];
+    const alreadyFlagged = flags.some(f => f.si === q.setIdx && f.qi === q.origIdx);
+    repeatBtn.className = 'repeat-btn' + (alreadyFlagged ? ' flagged' : '');
+    repeatBtn.textContent = alreadyFlagged ? '✅ Added to practice' : '🔁 Repeat later';
+    repeatBtn.disabled = false;
+  }
+}
+
+function toggleHint() {
+  const panel  = document.getElementById('hint-panel');
+  const btn    = document.getElementById('hint-btn');
+  const q      = currentQuestions[currentQ];
+  const setIdx = (q.setIdx !== undefined) ? q.setIdx : Math.min(progress.currentSetIndex, QUESTION_SETS.length - 1);
+  if (panel.classList.contains('show')) {
+    panel.classList.remove('show');
+    btn.textContent = '💡 Show hint';
+  } else {
+    panel.innerHTML = HINTS[setIdx][q.origIdx];
+    panel.classList.add('show');
+    btn.textContent = 'Hide hint ▲';
+  }
+}
+
+
+function toggleRepeatLater() {
+  const q = currentQuestions[currentQ];
+  if (q.isRepeat) return;
+  progress = loadProgress();
+  const flags = progress.flaggedQuestions || [];
+  const btn = document.getElementById('repeat-btn');
+  const idx = flags.findIndex(f => f.si === q.setIdx && f.qi === q.origIdx);
+  if (idx >= 0) {
+    flags.splice(idx, 1);
+    btn.className = 'repeat-btn';
+    btn.textContent = '🔁 Repeat later';
+  } else {
+    flags.push({ si: q.setIdx, qi: q.origIdx, streak: 0 });
+    btn.className = 'repeat-btn flagged';
+    btn.textContent = '✅ Added to practice';
+  }
+  progress.flaggedQuestions = flags;
+  saveProgress(progress);
+}
+
+function selectAnswer(chosen) {
+  if (answered) return;
+  answered = true;
+  const q = currentQuestions[currentQ];
+  const isCorrect = chosen === q.answer;
+
+  if (!q.isRepeat) sessionBreakdown[q.level].total++;
+  if (isCorrect) {
+    score++;
+    if (!q.isRepeat) { setScore++; sessionBreakdown[q.level].correct++; }
+  }
+
+  // ── Repeat question streak logic ──────────────────────────────────────────
+  let repeatNote = '';
+  if (q.isRepeat) {
+    const p = loadProgress();
+    const flags = p.flaggedQuestions || [];
+    const newStreak = isCorrect ? (q.repeatStreak + 1) : 0;
+    const RETIRE_AT = 3;
+    if (newStreak >= RETIRE_AT) {
+      // Fully learned — retire
+      repeatNote = `<div style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:0.82rem;color:#15803d;font-weight:600">🎓 Fully learned! This question has been retired from your practice queue.</div>`;
+    } else {
+      // Re-queue with updated streak
+      flags.push({ si: q.setIdx, qi: q.origIdx, streak: newStreak });
+      const remaining = RETIRE_AT - newStreak;
+      repeatNote = isCorrect
+        ? `<div style="margin-top:10px;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:0.82rem;color:#1d4ed8">✓ Practice streak: ${newStreak}/${RETIRE_AT} — ${remaining} more correct answer${remaining > 1 ? 's' : ''} to fully learn this.</div>`
+        : `<div style="margin-top:10px;padding:8px 12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;font-size:0.82rem;color:#92400e">Streak reset. Keep practising — this one will come back again.</div>`;
+    }
+    p.flaggedQuestions = flags;
+    saveProgress(p);
+  }
+
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('correct');
+    else if (i === chosen && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const resultLine = isCorrect
+    ? '<strong style="color:var(--correct)">✓ Correct !</strong> '
+    : `<strong style="color:var(--wrong)">✗ Incorrect.</strong> The correct answer was <em>${q.options[q.answer]}</em>. `;
+
+  const exp = document.getElementById('explanation');
+  const conjHtml = (!isCorrect && q.conjugation) ? q.conjugation : '';
+  exp.innerHTML = resultLine + q.explanation + conjHtml + repeatNote;
+  exp.className = 'explanation show';
+
+  const nb = document.getElementById('next-btn');
+  nb.textContent = currentQ < currentQuestions.length - 1 ? 'Next →' : 'See results →';
+  nb.className = 'btn btn-primary next-btn show';
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= currentQuestions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════════════════════════════
+function showResults() {
+  progress = loadProgress();
+  const setIdx = Math.min(progress.currentSetIndex, QUESTION_SETS.length - 1);
+  const total = currentSetTotal;   // only set questions count for mastery
+  const pct = setScore / total;
+  const isPerfect = setScore === total;
+
+  // Save session
+  const session = {
+    date: new Date().toISOString(),
+    setIndex: setIdx,
+    score, total,
+    levelBreakdown: sessionBreakdown,
+    perfect: isPerfect
+  };
+  progress.sessions.push(session);
+
+  // Unlock next set on perfect score
+  let justUnlocked = false;
+  if (isPerfect && !progress.masteredSets.includes(setIdx)) {
+    progress.masteredSets.push(setIdx);
+    if (setIdx + 1 < QUESTION_SETS.length) {
+      progress.currentSetIndex = setIdx + 1;
+      justUnlocked = true;
+    }
+  }
+  saveProgress(progress);
+
+  // Level + message
+  let level, levelName, message;
+  if (pct <= 0.25)      { level='A2'; levelName='Elementary';
+    message='You have a foundation in French basics. Focus on verb conjugations, definite/indefinite articles, and basic adjective agreement. Regular practice with everyday phrases will move you up quickly.'; }
+  else if (pct <= 0.50) { level='B1'; levelName='Intermediate';
+    message='Solid fundamentals! Work on the imparfait vs. passé composé distinction, object pronouns (direct, indirect, y, en), and basic subjunctive to consolidate B1.'; }
+  else if (pct <= 0.70) { level='B2'; levelName='Upper-Intermediate';
+    message='Strong performance! To reach C1, sharpen your command of advanced conditionals, subjunctive nuances, passive constructions, and start expanding your formal and literary vocabulary.'; }
+  else if (pct <= 0.88) { level='C1'; levelName='Advanced';
+    message='Excellent work! You handle complex grammar confidently. Deepen your knowledge of literary tenses (passé simple, passé antérieur), advanced concessive structures, and C2-level vocabulary.'; }
+  else if (pct < 1)     { level='C1+'; levelName='Advanced / Near-Native';
+    message='Outstanding — you\'re operating just below native level. Consolidate your C2 vocabulary (literary terms, formal register, rhetorical figures) for full mastery.'; }
+  else                   { level='C2'; levelName='Mastery';
+    message='Perfect score! You demonstrated mastery across all levels including advanced literary grammar and C2 vocabulary. Très bien joué — félicitations !'; }
+
+  document.getElementById('result-level').textContent = level;
+  document.getElementById('result-level-name').textContent = levelName;
+  document.getElementById('res-score-num').textContent = setScore;
+  document.getElementById('score-denom').textContent = '/ ' + total;
+
+  // Breakdown
+  const bkEl = document.getElementById('res-breakdown');
+  bkEl.innerHTML = '';
+  LEVELS.forEach(l => {
+    const d = sessionBreakdown[l];
+    if (!d || d.total === 0) return;
+    const [bg, fg] = BK_COLORS[l];
+    const div = document.createElement('div');
+    div.className = 'bk-item';
+    div.style.background = bg; div.style.color = fg;
+    div.innerHTML = `<div class="bk-num">${d.correct}/${d.total}</div><div class="bk-sub">${l}</div>`;
+    bkEl.appendChild(div);
+  });
+
+  // Unlock / retry banners
+  const unlockEl = document.getElementById('res-unlock');
+  const retryEl  = document.getElementById('res-retry');
+  if (justUnlocked) {
+    unlockEl.style.display = 'block';
+    unlockEl.innerHTML = `🎉 Perfect score! <strong>Set ${setIdx + 2}</strong> is now unlocked!`;
+    retryEl.style.display = 'none';
+  } else if (isPerfect && progress.masteredSets.length >= QUESTION_SETS.length) {
+    unlockEl.style.display = 'block';
+    unlockEl.innerHTML = `🏆 You've mastered <strong>all four sets</strong>. Félicitations !`;
+    retryEl.style.display = 'none';
+  } else if (!isPerfect) {
+    retryEl.style.display = 'block';
+    const needed = total - setScore;
+    retryEl.innerHTML = `You need <strong>${needed} more correct answer${needed>1?'s':''}</strong> (a perfect 10/10) to unlock the next set. The same questions will appear until you ace them all.`;
+    unlockEl.style.display = 'none';
+  } else {
+    unlockEl.style.display = 'none';
+    retryEl.style.display = 'none';
+  }
+
+  document.getElementById('res-message').textContent = message;
+  showScreen('screen-results');
+  if (isPerfect) launchConfetti();
+}
+
+function retryQuiz() { startQuiz(); }
+function goHome()    { renderDashboard(); }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFETTI
+// ══════════════════════════════════════════════════════════════════════════════
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.display = 'block';
+
+  const COLORS = [
+    '#0055a4','#ef4135','#ffffff',   // French flag
+    '#fbbf24','#a855f7','#22c55e',   // extras
+    '#f97316','#06b6d4','#ec4899'
+  ];
+
+  // Spawn particles in three bursts: centre, left, right
+  const BURST_ORIGINS = [
+    { x: canvas.width * 0.5,  y: canvas.height * 0.55 },
+    { x: canvas.width * 0.15, y: canvas.height * 0.65 },
+    { x: canvas.width * 0.85, y: canvas.height * 0.65 },
+  ];
+
+  const particles = [];
+
+  BURST_ORIGINS.forEach(origin => {
+    const n = origin.x === canvas.width * 0.5 ? 100 : 50;
+    for (let i = 0; i < n; i++) {
+      const angle   = Math.random() * Math.PI * 2;
+      const speed   = 4 + Math.random() * 14;
+      const isStrip = Math.random() > 0.55;
+      particles.push({
+        x:    origin.x + (Math.random() - 0.5) * 40,
+        y:    origin.y,
+        vx:   Math.cos(angle) * speed,
+        vy:   Math.sin(angle) * speed - 6,       // bias upward
+        w:    isStrip ? 4 + Math.random() * 5    : 7 + Math.random() * 7,
+        h:    isStrip ? 10 + Math.random() * 18  : 7 + Math.random() * 7,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        angle: Math.random() * Math.PI * 2,
+        spin:  (Math.random() - 0.5) * 0.22,
+        wobbleOffset: Math.random() * Math.PI * 2,
+        wobbleSpeed:  0.05 + Math.random() * 0.05,
+        shape: isStrip ? 'rect' : (Math.random() > 0.5 ? 'circle' : 'rect'),
+        alpha: 1,
+        born:  performance.now(),
+        life:  2800 + Math.random() * 2200,     // ms before fade-out begins
+        fadeFor: 900 + Math.random() * 600,
+      });
+    }
+  });
+
+  function draw(now) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let anyVisible = false;
+
+    particles.forEach(p => {
+      const age = now - p.born;
+      const fadeStart = p.life;
+      if (age > fadeStart + p.fadeFor) return;   // fully gone
+
+      // Physics
+      p.vx += Math.sin(p.wobbleOffset + age * p.wobbleSpeed) * 0.08;
+      p.vy += 0.22;                               // gravity
+      p.vx *= 0.994;                              // air resistance
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.angle += p.spin;
+
+      // Alpha
+      p.alpha = age > fadeStart
+        ? 1 - (age - fadeStart) / p.fadeFor
+        : 1;
+
+      if (p.y > canvas.height + 30) return;       // below viewport
+      anyVisible = true;
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = p.color;
+
+      if (p.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    });
+
+    if (anyVisible) {
+      requestAnimationFrame(draw);
+    } else {
+      canvas.style.display = 'none';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  requestAnimationFrame(draw);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// WOTD AUDIO
+// ══════════════════════════════════════════════════════════════════════════════
+function speakWotd() {
+  if (!window.speechSynthesis) {
+    alert('Speech synthesis is not supported in this browser.');
+    return;
+  }
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  const w = WOTD_LIST[dayIndex % WOTD_LIST.length];
+  // Speak the bare word (strip "le/la/les/un/une" for cleaner pronunciation of the word itself)
+  const textToSpeak = w.word;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(textToSpeak);
+  utt.lang = 'fr-FR';
+  utt.rate = 0.85;
+  const btn = document.getElementById('wotd-speak-btn');
+  btn.classList.add('speaking');
+  btn.textContent = '🔊 …';
+  utt.onend = () => { btn.classList.remove('speaking'); btn.textContent = '🔊 Listen'; };
+  utt.onerror = () => { btn.classList.remove('speaking'); btn.textContent = '🔊 Listen'; };
+  window.speechSynthesis.speak(utt);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ROLEPLAY CHAT
+// ══════════════════════════════════════════════════════════════════════════════
+const SCENARIOS = [
+  {
+    id: 'waiter',
+    icon: '🍽️',
+    name: 'Au restaurant',
+    desc: 'Commandez un repas à Paris',
+    system: `Tu es un serveur parisien dans un bistrot traditionnel. Tu t'appelles Julien. Tu parles UNIQUEMENT en français. Tes réponses sont courtes (2-3 phrases max). Tu es professionnel mais chaleureux. Si l'utilisateur fait une faute de français notable (grammaire ou vocabulaire), tu l'intègres naturellement dans ta réponse en utilisant la forme correcte, sans commenter explicitement — laisse l'exemple parler. Commence par accueillir le client. Propose la carte du jour.`
+  },
+  {
+    id: 'airport',
+    icon: '✈️',
+    name: 'Aéroport',
+    desc: 'Enregistrez vos bagages',
+    system: `Tu es un agent d'enregistrement à l'aéroport Charles-de-Gaulle pour Air France. Tu t'appelles Sophie. Tu parles UNIQUEMENT en français. Tes réponses sont courtes et efficaces (2-3 phrases). Si l'utilisateur fait une faute notable, utilise naturellement la forme correcte dans ta réponse. Commence par demander le passeport et la destination du passager.`
+  },
+  {
+    id: 'interview',
+    icon: '💼',
+    name: 'Entretien d\'embauche',
+    desc: 'Décrochez le poste',
+    system: `Tu es un directeur des ressources humaines dans une entreprise française. Tu t'appelles M. Lefebvre. Tu parles UNIQUEMENT en français. Tes réponses sont formelles et courtes (2-3 phrases). Si l'utilisateur fait une faute de français notable, intègre la correction naturellement dans une de tes phrases. Commence par accueillir le/la candidat(e) et demander-lui de se présenter.`
+  },
+  {
+    id: 'friend',
+    icon: '💬',
+    name: 'Textos entre amis',
+    desc: 'Chattez en argot parisien',
+    system: `Tu es Camille, un(e) ami(e) français(e) proche. Tu parles UNIQUEMENT en français, de façon très décontractée — utilise des abréviations de texto, de l'argot courant (genre, truc, machin, sympa, cool, etc.), des emojis. Tes messages sont courts comme de vrais SMS. Si l'utilisateur fait une faute vraiment notable, glisse la forme correcte dans ta réponse de façon naturelle. Commence par lui envoyer un message de tes nouvelles.`
+  },
+  {
+    id: 'family',
+    icon: '🏠',
+    name: 'Dîner en famille',
+    desc: 'Repas chez les parents',
+    system: `Tu es la mère d'une famille française typique. Tu t'appelles Madeleine. On est en train de dîner ensemble. Tu parles UNIQUEMENT en français, de façon chaleureuse et familière. Tes réponses sont courtes (2-3 phrases). Tu poses des questions sur la vie de l'utilisateur. Si il/elle fait une faute notable, utilise la forme correcte naturellement dans ta prochaine phrase. Commence par servir à table et dire ce que tu as préparé.`
+  }
+];
+
+let chatHistory = [];
+let currentScenario = null;
+
+function onApiKeyInput(inputId) {
+  const val = document.getElementById(inputId).value.trim();
+  if (val) localStorage.setItem('anthropicApiKey', val);
+  ['api-key-input', 'tr-api-key-input'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.id !== inputId) el.value = val;
+  });
+}
+
+function resetApiKey(which) {
+  localStorage.removeItem('anthropicApiKey');
+  if (which === 'chat') {
+    document.getElementById('api-key-input').value = '';
+    document.getElementById('chat-key-saved').style.display = 'none';
+    document.getElementById('chat-api-key-form').style.display = 'block';
+  } else {
+    document.getElementById('tr-api-key-input').value = '';
+    document.getElementById('tr-key-saved').style.display = 'none';
+    document.getElementById('tr-api-key-form').style.display = 'block';
+  }
+}
+
+async function testApiKey(inputId, resultId) {
+  const resultEl = document.getElementById(resultId);
+  const apiKey = document.getElementById(inputId).value.trim()
+               || localStorage.getItem('anthropicApiKey') || '';
+
+  if (!apiKey) {
+    resultEl.style.color = 'var(--wrong)';
+    resultEl.textContent = '✗ No key entered';
+    return;
+  }
+
+  resultEl.style.color = 'var(--muted)';
+  resultEl.textContent = 'Testing…';
+
+  const reqBody = {
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 5,
+    messages: [{ role: 'user', content: 'Say: ok' }]
+  };
+  console.log('[Test API Key] Request body:', reqBody);
+  console.log('[Test API Key] Key prefix:', apiKey.slice(0, 12) + '...');
+
+  try {
+    const response = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(reqBody)
+    });
+
+    const rawText = await response.text();
+    console.log('[Test API Key] HTTP status:', response.status, response.statusText);
+    console.log('[Test API Key] Raw response body:', rawText);
+
+    if (response.ok) {
+      localStorage.setItem('anthropicApiKey', apiKey);
+      resultEl.style.color = 'var(--correct)';
+      resultEl.textContent = '✓ Key works!';
+    } else {
+      let msg = `HTTP ${response.status}`;
+      try { msg += ': ' + (JSON.parse(rawText).error?.message || rawText); } catch(_) { msg += ': ' + rawText; }
+      resultEl.style.color = 'var(--wrong)';
+      resultEl.textContent = '✗ ' + msg;
+    }
+  } catch(e) {
+    console.error('[Test API Key] Fetch error:', e);
+    resultEl.style.color = 'var(--wrong)';
+    resultEl.textContent = '✗ ' + e.message;
+  }
+}
+
+function goToChat() {
+  const saved = localStorage.getItem('anthropicApiKey') || '';
+  document.getElementById('api-key-input').value = saved;
+  document.getElementById('chat-key-saved').style.display = saved ? 'flex' : 'none';
+  document.getElementById('chat-api-key-form').style.display = saved ? 'none' : 'block';
+
+  // Render scenario grid
+  const grid = document.getElementById('scenario-grid');
+  grid.innerHTML = '';
+  SCENARIOS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'scenario-btn';
+    btn.innerHTML = `<span class="scenario-icon">${s.icon}</span><div class="scenario-name">${s.name}</div><div class="scenario-desc">${s.desc}</div>`;
+    btn.onclick = () => startScenario(s.id);
+    grid.appendChild(btn);
+  });
+  showScreen('screen-scenarios');
+}
+
+async function startScenario(scenarioId) {
+  const apiKey = document.getElementById('api-key-input').value.trim()
+               || localStorage.getItem('anthropicApiKey') || '';
+  if (!apiKey) {
+    resetApiKey('chat');
+    alert('Please enter your Anthropic API key to use Roleplay Chat.');
+    return;
+  }
+  localStorage.setItem('anthropicApiKey', apiKey);
+
+  currentScenario = SCENARIOS.find(s => s.id === scenarioId);
+  chatHistory = [];
+
+  // Setup chat header
+  document.getElementById('chat-icon').textContent = currentScenario.icon;
+  document.getElementById('chat-title').textContent = currentScenario.name;
+  document.getElementById('chat-sub').textContent = currentScenario.desc + ' · Parlez français !';
+
+  // Clear messages
+  const messagesEl = document.getElementById('chat-messages');
+  messagesEl.innerHTML = '';
+  addChatBubble('system', 'La conversation commence — répondez en français !');
+
+  showScreen('screen-chat');
+
+  // Get opening message from AI
+  await fetchAiReply(apiKey);
+}
+
+function addChatBubble(type, text) {
+  const messagesEl = document.getElementById('chat-messages');
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble ' + type;
+  bubble.textContent = text;
+  messagesEl.appendChild(bubble);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+
+function showTypingIndicator() {
+  const messagesEl = document.getElementById('chat-messages');
+  const typing = document.createElement('div');
+  typing.className = 'chat-bubble ai chat-typing';
+  typing.id = 'typing-indicator';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  messagesEl.appendChild(typing);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function fetchAiReply(apiKey) {
+  const sendBtn = document.getElementById('chat-send-btn');
+  sendBtn.disabled = true;
+  showTypingIndicator();
+
+  try {
+    // API requires at least one message; seed with a silent opener when starting
+    const messages = chatHistory.length > 0
+      ? chatHistory
+      : [{ role: 'user', content: "Commencez la conversation, s'il vous plaît." }];
+    const reqBody = {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 250,
+      system: currentScenario.system,
+      messages
+    };
+    console.log('[Roleplay API] Sending request:', reqBody);
+    const response = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(reqBody)
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '(could not read body)');
+      console.error('[Roleplay API] Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errBody
+      });
+      let errMsg;
+      try { errMsg = JSON.parse(errBody).error?.message; } catch(_) {}
+      throw new Error(errMsg || `HTTP ${response.status}: ${errBody}`);
+    }
+
+    const data = await response.json();
+    console.log('[Roleplay API] Success:', data);
+    const aiText = data.content[0].text;
+    chatHistory.push({ role: 'assistant', content: aiText });
+    removeTypingIndicator();
+    addChatBubble('ai', aiText);
+  } catch (e) {
+    console.error('[Roleplay API] Caught error:', e);
+    removeTypingIndicator();
+    addChatBubble('system', `Erreur : ${e.message}. Vérifiez votre clé API.`);
+  } finally {
+    sendBtn.disabled = false;
+    document.getElementById('chat-input').focus();
+  }
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const apiKey = localStorage.getItem('anthropicApiKey');
+  if (!apiKey) { showScreen('screen-scenarios'); return; }
+
+  input.value = '';
+  input.style.height = 'auto';
+  chatHistory.push({ role: 'user', content: text });
+  addChatBubble('user', text);
+  await fetchAiReply(apiKey);
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
+  // Auto-resize textarea
+  const ta = e.target;
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CONSTRAINT TRANSLATION
+// ══════════════════════════════════════════════════════════════════════════════
+const TRANSLATE_EXERCISES = [
+  // ── B1 ────────────────────────────────────────────────────────────────────
+  { level:'B1', english:'I was watching TV when the phone rang.',
+    constraints:['Use the imparfait for the ongoing background action','Use the passé composé for the interrupting event','Include the word "quand"'],
+    notes:'Classic two-tense contrast: imparfait (regardais) + passé composé (a sonné). Subject: first person.' },
+  { level:'B1', english:'You absolutely have to leave early tomorrow morning.',
+    constraints:['Use "il faut que" followed by the subjunctive','Use the verb "partir"','Address the person informally (tu)'],
+    notes:'il faut que + subjunctive of partir: "il faut que tu partes". Express necessity.' },
+  { level:'B1', english:'If I have enough time, I\'ll come to the party.',
+    constraints:['Use a si-clause with the PRESENT tense (never future) after "si"','Use the future tense in the main clause','Informal register'],
+    notes:'Type 1 conditional: si + présent → futur simple. "Si j\'ai assez de temps, je viendrai."' },
+  { level:'B1', english:'She has been writing to her mother every week for years.',
+    constraints:['Use the imparfait to express a repeated past habit','Include a frequency expression (every week)','Use the verb "écrire" with an indirect object pronoun'],
+    notes:'Habitual past → imparfait. "Elle lui écrivait chaque semaine." COI pronoun lui for à sa mère.' },
+  { level:'B1', english:'I already ate, thanks — I\'m not hungry.',
+    constraints:['Use the passé composé','Include "déjà" in the correct position (between auxiliary and past participle)','Include the expression for "not hungry"'],
+    notes:'Passé composé with déjà: "j\'ai déjà mangé". Then: je n\'ai pas faim.' },
+  { level:'B1', english:'My train is running twenty minutes late.',
+    constraints:['Use "avoir du retard" (not "être en retard")','Specify the duration of the delay','Formal enough for travel context'],
+    notes:'"Mon train a vingt minutes de retard." Or "a du retard de vingt minutes."' },
+
+  // ── B2 ────────────────────────────────────────────────────────────────────
+  { level:'B2', english:'Although she was exhausted, she stayed until the end of the meeting.',
+    constraints:['Use "bien que" followed by the subjunctive','Subjonctif of "être" for the state of exhaustion','Past tense for staying until the end'],
+    notes:'"Bien qu\'elle soit épuisée, elle est restée jusqu\'à la fin de la réunion." bien que + soit.' },
+  { level:'B2', english:'She would have got the job if she had prepared better.',
+    constraints:['Use the conditionnel passé in the main clause','Use the plus-que-parfait in the si-clause','Use "obtenir" or "avoir" for the result'],
+    notes:'"Elle aurait obtenu le poste si elle avait mieux préparé." Hypothetical past condition.' },
+  { level:'B2', english:'After finishing the report, she immediately sent it to her manager.',
+    constraints:['Use "après avoir" + infinitif passé (not après + present infinitive)','Include an adverb of immediacy','Use a direct object pronoun to avoid repeating "le rapport"'],
+    notes:'"Après avoir terminé le rapport, elle l\'a immédiatement envoyé à son responsable."' },
+  { level:'B2', english:'There\'s no more coffee left — could you buy some?',
+    constraints:['Use "ne...plus de" after negation (article becomes de, not du)','Use the conditional of "pouvoir" for the polite request','Use the pronoun "en" to avoid repeating "café"'],
+    notes:'"Il n\'y a plus de café — tu pourrais en acheter ?" or formal "pourriez-vous".' },
+  { level:'B2', english:'Could you tell me where the nearest pharmacy is, please? (formal)',
+    constraints:['Use the conditional for polite request','Use formal "vous" register throughout','Include "s\'il vous plaît"'],
+    notes:'"Pourriez-vous me dire où se trouve la pharmacie la plus proche, s\'il vous plaît ?"' },
+  { level:'B2', english:'The video was shared thousands of times on social media within an hour.',
+    constraints:['Use the passive voice (être + past participle)','Agree the past participle correctly','Use a formal time expression'],
+    notes:'"La vidéo a été partagée des milliers de fois sur les réseaux sociaux en moins d\'une heure."' },
+
+  // ── C1 ────────────────────────────────────────────────────────────────────
+  { level:'C1', english:'Whatever decision he makes, we will support him.',
+    constraints:['Use "quoi que" followed by the subjunctive','Future tense in the main clause','Third person singular throughout'],
+    notes:'"Quelle que soit la décision qu\'il prenne" or "Quoi qu\'il décide, nous le soutiendrons."' },
+  { level:'C1', english:'It\'s the most interesting book I have ever read.',
+    constraints:['Use a superlative construction','Use the subjunctive in the relative clause after the superlative','Include "jamais"'],
+    notes:'"C\'est le livre le plus intéressant que j\'aie jamais lu." Superlative → subjunctive passé.' },
+  { level:'C1', english:'The city she grew up in no longer exists.',
+    constraints:['Use "dont" correctly (for a verb requiring de: grandir dans → not applicable, use où or dans laquelle)','Actually use "où" or "dans laquelle" as a relative pronoun of place','Use "ne...plus" negation'],
+    notes:'"La ville où elle a grandi n\'existe plus." or "dans laquelle elle a grandi". Ne...plus.' },
+  { level:'C1', english:'He told me he would come the following day.',
+    constraints:['Use reported speech with correct tense backshift (futur → conditionnel)','Change "tomorrow" to "le lendemain"','Past reporting verb (il m\'a dit que)'],
+    notes:'"Il m\'a dit qu\'il viendrait le lendemain." Futur → conditionnel, demain → le lendemain.' },
+  { level:'C1', english:'Despite his many faults, he remains a loyal friend.',
+    constraints:['Use "malgré" + noun phrase (NOT "bien que" + clause)','Present tense for the main statement','Include a positive quality'],
+    notes:'"Malgré ses nombreux défauts, il reste un ami fidèle." Malgré + noun, never + verb.' },
+  { level:'C1', english:'The letters that she had written were never sent.',
+    constraints:['Passive construction or use "ne jamais" with passé composé','Past participle agreement with the subject','Use "que" relative pronoun with preceding COD agreement if using active voice'],
+    notes:'"Les lettres qu\'elle avait écrites n\'ont jamais été envoyées." PP agreement with les lettres (fém. pl.).' },
+
+  // ── C2 ────────────────────────────────────────────────────────────────────
+  { level:'C2', english:'The minister\'s resignation sparked considerable controversy.',
+    constraints:['Use "susciter" (not "provoquer" or "créer")','Formal written register throughout','Correct use of a quantifier meaning "considerable" or "significant"'],
+    notes:'"La démission du ministre a suscité une vive controverse." Susciter = to give rise to (elevated register).' },
+  { level:'C2', english:'Whether he succeeds or fails, the outcome will be the same.',
+    constraints:['Use "que...ou que" + subjunctive (not "si...ou si")','Subjunctive for both verbs in the concessive pair','Formal or neutral register'],
+    notes:'"Qu\'il réussisse ou qu\'il échoue, le résultat sera le même." Que + subj + ou que + subj.' },
+  { level:'C2', english:'He worked for years; nonetheless, he was never recognised for his efforts.',
+    constraints:['Use "néanmoins" or "toutefois" (not "mais" or "pourtant")','Use the passé simple for the formal narrative (or passé composé if mixing registers)','Formal written style'],
+    notes:'"Il travailla pendant des années ; néanmoins, ses efforts ne furent jamais reconnus." Passé simple + néanmoins.' },
+  { level:'C2', english:'Most of the guests had already left before midnight.',
+    constraints:['Use "la plupart de" with a PLURAL verb','Plus-que-parfait for the action completed before midnight','Include "avant" + time reference'],
+    notes:'"La plupart des invités étaient déjà partis avant minuit." La plupart → plural verb always.' },
+];
+
+let trExerciseIndex = 0;
+let trCurrentExercise = null;
+
+function goToTranslate() {
+  const saved = parseInt(localStorage.getItem('trExerciseIndex') || '0', 10);
+  trExerciseIndex = Math.min(saved, TRANSLATE_EXERCISES.length - 1);
+
+  const apiKey = localStorage.getItem('anthropicApiKey') || '';
+  document.getElementById('tr-api-key-input').value = apiKey;
+  document.getElementById('tr-key-saved').style.display = apiKey ? 'flex' : 'none';
+  document.getElementById('tr-api-key-form').style.display = apiKey ? 'none' : 'block';
+
+  renderTranslateExercise();
+  showScreen('screen-translate');
+}
+
+function renderTranslateExercise() {
+  trCurrentExercise = TRANSLATE_EXERCISES[trExerciseIndex];
+  const ex = trCurrentExercise;
+
+  // Level badge
+  const badge = document.getElementById('tr-level-badge');
+  badge.textContent = ex.level;
+  badge.className = 'badge ' + BADGE_CLASSES[ex.level];
+
+  // Progress
+  document.getElementById('tr-progress-text').textContent =
+    `Exercise ${trExerciseIndex + 1} of ${TRANSLATE_EXERCISES.length}`;
+
+  // Sentence
+  document.getElementById('tr-sentence').textContent = ex.english;
+
+  // Constraints
+  const cEl = document.getElementById('tr-constraints');
+  cEl.innerHTML = '';
+  ex.constraints.forEach((c, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'tr-chip';
+    chip.innerHTML = `<span class="tr-chip-num">${i + 1}</span><span>${c}</span>`;
+    cEl.appendChild(chip);
+  });
+
+  // Reset input and feedback
+  document.getElementById('tr-input').value = '';
+  document.getElementById('tr-submit-btn').disabled = true;
+  document.getElementById('tr-feedback-card').style.display = 'none';
+  document.getElementById('tr-exercise-card').style.display = 'block';
+}
+
+function trInputChanged() {
+  const val = document.getElementById('tr-input').value.trim();
+  document.getElementById('tr-submit-btn').disabled = val.length < 3;
+}
+
+async function submitTranslation() {
+  const apiKeyInput = document.getElementById('tr-api-key-input').value.trim();
+  const storedKey = localStorage.getItem('anthropicApiKey') || '';
+  const apiKey = apiKeyInput || storedKey;
+
+  if (!apiKey) {
+    document.getElementById('tr-api-key-form').style.display = 'block';
+    document.getElementById('tr-api-key-input').focus();
+    return;
+  }
+  if (apiKeyInput) localStorage.setItem('anthropicApiKey', apiKeyInput);
+
+  const userAnswer = document.getElementById('tr-input').value.trim();
+  const ex = trCurrentExercise;
+
+  const btn = document.getElementById('tr-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Evaluating…';
+
+  const systemPrompt = `You are a precise French language teacher evaluating a student's translation.
+Evaluate the student's answer against each constraint and return ONLY valid JSON — no markdown, no prose outside the JSON.
+
+JSON format:
+{
+  "constraints": [
+    {"label": "<exact constraint text>", "status": "met"|"partial"|"unmet", "comment": "<1-2 sentences>"}
+  ],
+  "overall": "correct"|"partial"|"incorrect",
+  "idealAnswer": "<the ideal French translation>",
+  "feedback": "<2-3 sentences: what they did well, what to improve>"
+}
+
+Rules:
+- "met" = constraint fully satisfied
+- "partial" = constraint attempted but with errors (e.g. right structure, wrong form)
+- "unmet" = constraint not attempted or completely wrong
+- "correct" overall = all constraints met, meaning is conveyed
+- "partial" overall = some constraints met
+- "incorrect" overall = major grammar errors or meaning lost
+- If the student's answer is different from ideal but still correct French that meets all constraints, mark it "correct"
+- Be precise about verb tenses, agreement, pronoun placement
+- Notes for context: ${ex.notes}`;
+
+  const userMessage = `English sentence: "${ex.english}"
+
+Constraints:
+${ex.constraints.map((c, i) => `${i+1}. ${c}`).join('\n')}
+
+Student's translation: "${userAnswer}"
+
+Evaluate and return JSON only.`;
+
+  try {
+    const reqBody = {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 600,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    };
+    console.log('[Translate API] Sending request:', reqBody);
+    const response = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(reqBody)
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '(could not read body)');
+      console.error('[Translate API] Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errBody
+      });
+      let errMsg;
+      try { errMsg = JSON.parse(errBody).error?.message; } catch(_) {}
+      throw new Error(errMsg || `HTTP ${response.status}: ${errBody}`);
+    }
+
+    const data = await response.json();
+    console.log('[Translate API] Success:', data);
+    let raw = data.content[0].text.trim();
+    // Strip possible markdown fences
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/,'');
+    const result = JSON.parse(raw);
+    showTranslateFeedback(result);
+
+    // Persist progress
+    trExerciseIndex = Math.min(trExerciseIndex + 1, TRANSLATE_EXERCISES.length - 1);
+    localStorage.setItem('trExerciseIndex', trExerciseIndex);
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Evaluate →';
+    alert(`Error: ${e.message}\n\nCheck your API key and try again.`);
+  }
+}
+
+function showTranslateFeedback(result) {
+  // Header
+  const icons = { correct: '✅', partial: '⚠️', incorrect: '❌' };
+  const labels = { correct: 'Well done!', partial: 'Partially correct', incorrect: 'Needs work' };
+  const colors = { correct: 'var(--correct)', partial: '#b45309', incorrect: 'var(--wrong)' };
+  const hdr = document.getElementById('tr-feedback-header');
+  hdr.innerHTML = `<span style="color:${colors[result.overall]}">${icons[result.overall]} ${labels[result.overall]}</span>`;
+
+  // Per-constraint results
+  const crEl = document.getElementById('tr-constraint-results');
+  crEl.innerHTML = '';
+  (result.constraints || []).forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'tr-constraint-result ' + (c.status === 'met' ? 'met' : c.status === 'partial' ? 'partial' : 'unmet');
+    const icon = c.status === 'met' ? '✅' : c.status === 'partial' ? '⚠️' : '❌';
+    div.innerHTML = `<span class="tr-cr-icon">${icon}</span><div><span class="tr-cr-label">Constraint ${i+1}: ${c.label}</span>${c.comment}</div>`;
+    crEl.appendChild(div);
+  });
+
+  // Ideal answer
+  document.getElementById('tr-ideal-text').textContent = result.idealAnswer || '—';
+
+  // Overall feedback
+  document.getElementById('tr-overall-feedback').textContent = result.feedback || '';
+
+  // Show feedback card, hide submit button
+  document.getElementById('tr-submit-btn').textContent = 'Evaluate →';
+  document.getElementById('tr-submit-btn').disabled = true;
+  document.getElementById('tr-feedback-card').style.display = 'block';
+  document.getElementById('tr-feedback-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function nextTranslateExercise() {
+  if (trExerciseIndex >= TRANSLATE_EXERCISES.length) {
+    // All done — loop back
+    trExerciseIndex = 0;
+    localStorage.setItem('trExerciseIndex', 0);
+  }
+  renderTranslateExercise();
+  document.getElementById('tr-exercise-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+window.onload = renderDashboard;
+</script>
+</body>
+</html>
