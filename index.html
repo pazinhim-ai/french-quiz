@@ -1864,7 +1864,9 @@ function speakWotd() {
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(textToSpeak);
   utt.lang = 'fr-FR';
-  utt.rate = 0.85;
+  utt.rate = 1.1;
+  const wotdVoice = getBestFrenchVoice(window.speechSynthesis.getVoices());
+  if (wotdVoice) utt.voice = wotdVoice;
   const btn = document.getElementById('wotd-speak-btn');
   btn.classList.add('speaking');
   btn.textContent = '🔊 …';
@@ -2071,15 +2073,27 @@ function removeTypingIndicator() {
 }
 
 // ── SPEECH SYNTHESIS ─────────────────────────────────────────────────────────
+function getBestFrenchVoice(voices) {
+  const frVoices = voices.filter(v => v.lang && v.lang.startsWith('fr'));
+  // Prefer fr-FR Premium, then fr-FR Enhanced, then any fr-FR, then any fr
+  return (
+    frVoices.find(v => v.lang === 'fr-FR' && /premium/i.test(v.name)) ||
+    frVoices.find(v => v.lang === 'fr-FR' && /enhanced/i.test(v.name)) ||
+    frVoices.find(v => v.lang === 'fr-FR') ||
+    frVoices[0] ||
+    null
+  );
+}
+
 function speakFrench(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const doSpeak = () => {
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = 'fr-FR';
-    utt.rate = 0.88;
+    utt.rate = 1.1;
     const voices = window.speechSynthesis.getVoices();
-    const frVoice = voices.find(v => v.lang && v.lang.startsWith('fr'));
+    const frVoice = getBestFrenchVoice(voices);
     if (frVoice) utt.voice = frVoice;
     window.speechSynthesis.speak(utt);
   };
