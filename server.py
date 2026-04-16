@@ -4,6 +4,7 @@ import socketserver
 import urllib.request
 import urllib.error
 import os
+import threading
 
 PORT = int(os.environ.get('PORT', 8080))
 ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
@@ -18,7 +19,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path == '/api/proxy':
+        if self.path.startswith('/api/proxy'):
             self._proxy()
         else:
             self.send_error(404, 'Not found')
@@ -77,8 +78,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         print(self.address_string(), '-', fmt % args)
 
 
-socketserver.TCPServer.allow_reuse_address = True
-with socketserver.TCPServer(('', PORT), Handler) as httpd:
+class ThreadingServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    allow_reuse_address = True
+    daemon_threads = True  # don't block shutdown on in-flight requests
+
+with ThreadingServer(('', PORT), Handler) as httpd:
     print(f'French quiz running at http://localhost:{PORT}')
     print(f'Anthropic proxy at   http://localhost:{PORT}/api/proxy')
     httpd.serve_forever()
