@@ -416,6 +416,57 @@
   .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
   .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes typing { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+  /* ── MIC BUTTON ─────────────────────────────────────────────────── */
+  .btn-mic {
+    background: #f1f5f9; border: 1.5px solid var(--border); border-radius: 10px;
+    width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.05rem; flex-shrink: 0; transition: all 0.15s;
+  }
+  .btn-mic:hover { background: #e2e8f0; }
+  .btn-mic.listening {
+    background: #fef2f2; border-color: #fca5a5; color: #dc2626;
+    animation: mic-pulse 1s ease-in-out infinite;
+  }
+  @keyframes mic-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+  }
+
+  /* ── CORRECTION OVERLAY ─────────────────────────────────────────── */
+  .correction-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.72);
+    z-index: 9999; display: flex; align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(2px);
+  }
+  .correction-card {
+    background: #fff; border-radius: 18px; padding: 26px 24px;
+    max-width: 440px; width: 100%; box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+    animation: fadeIn 0.2s ease;
+  }
+  .correction-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+  .correction-note { font-size: 0.86rem; color: var(--muted); margin-bottom: 18px; line-height: 1.55; }
+  .correction-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .correction-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); min-width: 76px; flex-shrink: 0; padding-top: 3px; }
+  .correction-wrong { color: #dc2626; text-decoration: line-through; font-size: 0.95rem; line-height: 1.4; }
+  .correction-right { color: #16a34a; font-weight: 700; font-size: 1rem; line-height: 1.4; }
+  .btn-speak-correct { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; margin: 10px 0 18px; font-family: inherit; color: var(--muted); }
+  .btn-speak-correct:hover { background: #e2e8f0; }
+  .correction-repeat-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 10px; }
+  .correction-dots { display: flex; gap: 9px; margin-bottom: 14px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: #e2e8f0; transition: background 0.25s, transform 0.2s; }
+  .dot.filled { background: #16a34a; transform: scale(1.2); }
+  .correction-input-row { display: flex; gap: 8px; align-items: center; }
+  .correction-input { flex: 1; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 0.92rem; font-family: inherit; outline: none; }
+  .correction-input:focus { border-color: var(--blue); }
+  .btn-mic-small {
+    background: #f1f5f9; border: 1.5px solid var(--border); border-radius: 8px;
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .btn-mic-small.listening { background: #fef2f2; border-color: #fca5a5; animation: mic-pulse 1s ease-in-out infinite; }
+  .correction-feedback { min-height: 22px; font-size: 0.83rem; margin-top: 9px; line-height: 1.4; }
+
   .api-key-form { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
   .api-key-form label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
   .api-key-input {
@@ -547,9 +598,45 @@
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-input-row">
-      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Écrivez en français…" onkeydown="chatKeydown(event)"></textarea>
+      <button class="btn-mic" id="chat-mic-btn" onclick="toggleMic()" title="Parler en français">🎤</button>
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="Écrivez ou parlez en français…" onkeydown="chatKeydown(event)"></textarea>
       <button class="btn-send" id="chat-send-btn" onclick="sendChatMessage()">Envoyer</button>
     </div>
+  </div>
+</div>
+
+<!-- ── CORRECTION OVERLAY ─────────────────────────────────────────────────── -->
+<div class="correction-overlay" id="correction-overlay" style="display:none">
+  <div class="correction-card">
+    <div class="correction-title">✋ Petite correction !</div>
+    <div class="correction-note" id="correction-note"></div>
+    <div class="correction-row">
+      <span class="correction-label">Tu as dit :</span>
+      <span class="correction-wrong" id="correction-wrong"></span>
+    </div>
+    <div class="correction-row">
+      <span class="correction-label">On dit :</span>
+      <span class="correction-right" id="correction-right"></span>
+    </div>
+    <button class="btn-speak-correct" onclick="speakCorrection()">🔊 Écouter la phrase correcte</button>
+    <div class="correction-repeat-label">Répétez 3 fois pour continuer</div>
+    <div class="correction-dots">
+      <span class="dot" id="dot-0"></span>
+      <span class="dot" id="dot-1"></span>
+      <span class="dot" id="dot-2"></span>
+    </div>
+    <div class="correction-input-row">
+      <input type="text" class="correction-input" id="correction-input"
+             placeholder="Tapez la phrase correcte…" onkeydown="correctionKeydown(event)" />
+      <button class="btn-mic-small" id="correction-mic-btn" onclick="toggleCorrectionMic()" title="Parler">🎤</button>
+      <button class="btn btn-primary" onclick="submitRepetition()" style="padding:8px 16px;flex-shrink:0;border-radius:8px">✓</button>
+    </div>
+    <div class="correction-feedback" id="correction-feedback"></div>
+    <button class="btn btn-primary" id="correction-continue-btn"
+            onclick="continueAfterCorrection()"
+            style="width:100%;margin-top:14px;display:none">
+      Parfait ! Continuer la conversation →
+    </button>
   </div>
 </div>
 
@@ -1950,6 +2037,10 @@ async function startScenario(scenarioId) {
 
   showScreen('screen-chat');
 
+  // Init speech recognition; hide mic button if browser doesn't support it
+  if (!recognition) recognition = initRecognition();
+  document.getElementById('chat-mic-btn').style.display = recognition ? 'flex' : 'none';
+
   // Get opening message from AI
   await fetchAiReply(apiKey);
 }
@@ -1979,20 +2070,183 @@ function removeTypingIndicator() {
   if (el) el.remove();
 }
 
+// ── SPEECH SYNTHESIS ─────────────────────────────────────────────────────────
+function speakFrench(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const doSpeak = () => {
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'fr-FR';
+    utt.rate = 0.88;
+    const voices = window.speechSynthesis.getVoices();
+    const frVoice = voices.find(v => v.lang && v.lang.startsWith('fr'));
+    if (frVoice) utt.voice = frVoice;
+    window.speechSynthesis.speak(utt);
+  };
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length) doSpeak();
+  else { window.speechSynthesis.onvoiceschanged = () => { doSpeak(); window.speechSynthesis.onvoiceschanged = null; }; }
+}
+
+// ── SPEECH RECOGNITION ───────────────────────────────────────────────────────
+let recognition = null;
+let micTarget = null; // 'chat' | 'correction'
+let micActive = false;
+
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'fr-FR';
+  r.continuous = false;
+  r.interimResults = false;
+  r.onresult = e => {
+    const transcript = e.results[0][0].transcript;
+    if (micTarget === 'chat') {
+      const inp = document.getElementById('chat-input');
+      inp.value = transcript;
+      inp.style.height = 'auto';
+      inp.style.height = inp.scrollHeight + 'px';
+    } else if (micTarget === 'correction') {
+      document.getElementById('correction-input').value = transcript;
+    }
+    stopMic();
+  };
+  r.onerror = () => stopMic();
+  r.onend = () => {
+    micActive = false;
+    document.getElementById('chat-mic-btn').classList.remove('listening');
+    const cb = document.getElementById('correction-mic-btn');
+    if (cb) cb.classList.remove('listening');
+  };
+  return r;
+}
+
+function toggleMic() {
+  if (!recognition) recognition = initRecognition();
+  if (!recognition) return;
+  if (micActive && micTarget === 'chat') { stopMic(); return; }
+  if (micActive) stopMic();
+  micTarget = 'chat';
+  try { recognition.start(); } catch(_) { return; }
+  micActive = true;
+  document.getElementById('chat-mic-btn').classList.add('listening');
+}
+
+function toggleCorrectionMic() {
+  if (!recognition) recognition = initRecognition();
+  if (!recognition) return;
+  if (micActive && micTarget === 'correction') { stopMic(); return; }
+  if (micActive) stopMic();
+  micTarget = 'correction';
+  try { recognition.start(); } catch(_) { return; }
+  micActive = true;
+  document.getElementById('correction-mic-btn').classList.add('listening');
+}
+
+function stopMic() {
+  if (recognition) try { recognition.stop(); } catch(_) {}
+  micActive = false;
+  document.getElementById('chat-mic-btn').classList.remove('listening');
+  const cb = document.getElementById('correction-mic-btn');
+  if (cb) cb.classList.remove('listening');
+}
+
+// ── CORRECTION MODE ───────────────────────────────────────────────────────────
+const CORRECTION_INSTRUCTION = `
+
+CORRECTION RULE (HIGHEST PRIORITY): If the user makes a clear grammatical error in their French (wrong tense, wrong agreement, missing/wrong article, wrong word order — NOT minor accent errors or informal style), stop the roleplay and respond with ONLY this JSON, no other text:
+{"type":"correction","wrong":"[exact incorrect phrase the user wrote]","right":"[the correct French version]","note":"[brief friendly explanation in English, max 12 words]"}
+If their French is correct or acceptable, continue the roleplay normally in character.`;
+
+let correctionState = null;
+let correctionCount = 0;
+
+function enterCorrectionMode(wrong, right, note) {
+  correctionState = { right, chatIdx: chatHistory.length - 1 };
+  correctionCount = 0;
+  document.getElementById('correction-note').textContent = note;
+  document.getElementById('correction-wrong').textContent = wrong;
+  document.getElementById('correction-right').textContent = right;
+  document.getElementById('correction-feedback').textContent = '';
+  document.getElementById('correction-input').value = '';
+  document.getElementById('correction-continue-btn').style.display = 'none';
+  ['dot-0','dot-1','dot-2'].forEach(id => document.getElementById(id).classList.remove('filled'));
+  document.getElementById('correction-overlay').style.display = 'flex';
+  speakCorrection();
+  setTimeout(() => document.getElementById('correction-input').focus(), 400);
+}
+
+function speakCorrection() {
+  if (correctionState) speakFrench(correctionState.right);
+}
+
+function correctionKeydown(e) {
+  if (e.key === 'Enter') { e.preventDefault(); submitRepetition(); }
+}
+
+function submitRepetition() {
+  if (!correctionState) return;
+  stopMic();
+  const input = document.getElementById('correction-input');
+  const typed = input.value.trim();
+  const norm = s => s.toLowerCase().replace(/[.,!?;:]+$/, '').trim();
+  const isMatch = norm(typed) === norm(correctionState.right);
+  const feedbackEl = document.getElementById('correction-feedback');
+
+  if (isMatch) {
+    correctionCount++;
+    document.getElementById(`dot-${correctionCount - 1}`).classList.add('filled');
+    input.value = '';
+    if (correctionCount >= 3) {
+      feedbackEl.style.color = 'var(--correct)';
+      feedbackEl.textContent = '🎉 Excellent ! Vous avez bien mémorisé.';
+      document.getElementById('correction-continue-btn').style.display = 'block';
+      speakFrench('Excellent ! Très bien !');
+    } else {
+      const remaining = 3 - correctionCount;
+      feedbackEl.style.color = 'var(--correct)';
+      feedbackEl.textContent = `✓ Bien ! Encore ${remaining} fois…`;
+      speakFrench(correctionState.right);
+      input.focus();
+    }
+  } else {
+    feedbackEl.style.color = 'var(--wrong)';
+    feedbackEl.textContent = 'Pas tout à fait — regardez bien la phrase et réessayez.';
+    input.value = '';
+    input.focus();
+  }
+}
+
+async function continueAfterCorrection() {
+  if (!correctionState) return;
+  stopMic();
+  // Replace the wrong user message in history with the corrected version
+  if (correctionState.chatIdx >= 0 && correctionState.chatIdx < chatHistory.length) {
+    chatHistory[correctionState.chatIdx].content = correctionState.right;
+  }
+  correctionState = null;
+  correctionCount = 0;
+  document.getElementById('correction-overlay').style.display = 'none';
+  addChatBubble('system', 'Correction terminée — la conversation reprend…');
+  const apiKey = localStorage.getItem('anthropicApiKey');
+  await fetchAiReply(apiKey);
+}
+
+// ── FETCH AI REPLY ────────────────────────────────────────────────────────────
 async function fetchAiReply(apiKey) {
   const sendBtn = document.getElementById('chat-send-btn');
   sendBtn.disabled = true;
   showTypingIndicator();
 
   try {
-    // API requires at least one message; seed with a silent opener when starting
     const messages = chatHistory.length > 0
       ? chatHistory
       : [{ role: 'user', content: "Commencez la conversation, s'il vous plaît." }];
     const reqBody = {
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 250,
-      system: currentScenario.system,
+      max_tokens: 350,
+      system: currentScenario.system + CORRECTION_INSTRUCTION,
       messages
     };
     console.log('[Roleplay API] Sending request:', reqBody);
@@ -2008,11 +2262,7 @@ async function fetchAiReply(apiKey) {
 
     if (!response.ok) {
       const errBody = await response.text().catch(() => '(could not read body)');
-      console.error('[Roleplay API] Error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errBody
-      });
+      console.error('[Roleplay API] Error response:', { status: response.status, statusText: response.statusText, body: errBody });
       let errMsg;
       try { errMsg = JSON.parse(errBody).error?.message; } catch(_) {}
       throw new Error(errMsg || `HTTP ${response.status}: ${errBody}`);
@@ -2020,10 +2270,20 @@ async function fetchAiReply(apiKey) {
 
     const data = await response.json();
     console.log('[Roleplay API] Success:', data);
-    const aiText = data.content[0].text;
-    chatHistory.push({ role: 'assistant', content: aiText });
+    const aiText = data.content[0].text.trim();
     removeTypingIndicator();
-    addChatBubble('ai', aiText);
+
+    // Detect correction JSON
+    let parsed = null;
+    try { parsed = JSON.parse(aiText); } catch(_) {}
+
+    if (parsed && parsed.type === 'correction') {
+      enterCorrectionMode(parsed.wrong, parsed.right, parsed.note);
+    } else {
+      chatHistory.push({ role: 'assistant', content: aiText });
+      addChatBubble('ai', aiText);
+      speakFrench(aiText);
+    }
   } catch (e) {
     console.error('[Roleplay API] Caught error:', e);
     removeTypingIndicator();
