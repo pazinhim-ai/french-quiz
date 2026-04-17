@@ -164,6 +164,17 @@
     .btn-outline:hover { background: var(--blue); color: #fff; }
     .btn-sm { padding: 8px 18px; font-size: 0.88rem; }
 
+    /* ── BACK TO DASHBOARD ────────────────────────────────────────── */
+    .btn-back-dashboard {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 6px 14px;
+      font-size: 0.82rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; margin-bottom: 14px;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-back-dashboard:hover { border-color: var(--blue); color: var(--blue); background: #eef3fb; }
+
     /* ── PROGRESS BAR ──────────────────────────────────────────────── */
     .progress-wrap { margin-bottom: 16px; }
     .progress-meta { display: flex; justify-content: space-between;
@@ -688,6 +699,7 @@
 
 <!-- ── QUIZ ───────────────────────────────────────────────────────────────── -->
 <div id="screen-quiz" class="screen" style="display:none">
+  <button class="btn-back-dashboard" onclick="goHome()">← Dashboard</button>
   <div class="progress-wrap">
     <div class="progress-meta">
       <span id="q-counter">Question 1 / 25</span>
